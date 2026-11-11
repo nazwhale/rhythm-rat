@@ -1,0 +1,72 @@
+{
+  "id": "a-little-stretch",
+  "title": "A Little Stretch",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1075,
+  "bars": [
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      {
+        "duration": "q",
+        "rest": true
+      },
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      {
+        "duration": "q",
+        "tie": true
+      },
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      {
+        "duration": "q",
+        "rest": true
+      },
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "q",
+      "q",
+      "q"
+    ]
+  ]
+}

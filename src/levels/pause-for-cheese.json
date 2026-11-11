@@ -1,0 +1,77 @@
+{
+  "id": "pause-for-cheese",
+  "title": "Pause for Cheese",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1025,
+  "bars": [
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      {
+        "duration": "q",
+        "rest": true
+      },
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      {
+        "duration": "q",
+        "rest": true
+      },
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      {
+        "duration": "q",
+        "rest": true
+      }
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      {
+        "duration": "q",
+        "rest": true
+      }
+    ]
+  ]
+}

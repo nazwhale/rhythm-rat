@@ -1,0 +1,110 @@
+{
+  "id": "midnight-munch",
+  "title": "Midnight Munch",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1300,
+  "bars": [
+    [
+      "8",
+      "8",
+      "q",
+      "q",
+      {
+        "duration": "8",
+        "rest": true
+      },
+      {
+        "duration": "8",
+        "tie": true
+      }
+    ],
+    [
+      "q",
+      "8",
+      {
+        "duration": "8",
+        "tie": true
+      },
+      "8",
+      {
+        "duration": "q",
+        "dotted": true
+      }
+    ],
+    [
+      "q",
+      "q",
+      "8",
+      "8",
+      "q"
+    ],
+    [
+      "q",
+      "q",
+      "q",
+      "8",
+      {
+        "duration": "8",
+        "tie": true
+      }
+    ],
+    [
+      "8",
+      "8",
+      "8",
+      {
+        "duration": "8",
+        "tie": true
+      },
+      {
+        "duration": "q",
+        "dotted": true
+      },
+      {
+        "duration": "8",
+        "tie": true
+      }
+    ],
+    [
+      "q",
+      "8",
+      {
+        "duration": "8",
+        "tie": true
+      },
+      "q",
+      "8",
+      {
+        "duration": "8",
+        "tie": true
+      }
+    ],
+    [
+      "8",
+      "8",
+      "8",
+      {
+        "duration": "8",
+        "tie": true
+      },
+      {
+        "duration": "q",
+        "dotted": true
+      },
+      {
+        "duration": "8",
+        "tie": true
+      }
+    ],
+    [
+      "q",
+      "8",
+      {
+        "duration": "8",
+        "tie": true
+      },
+      "h"
+    ]
+  ]
+}

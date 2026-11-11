@@ -1,0 +1,77 @@
+{
+  "id": "offbeat-nibbles",
+  "title": "Offbeat Nibbles",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1050,
+  "bars": [
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      {
+        "duration": "8",
+        "rest": true
+      },
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      {
+        "duration": "8",
+        "rest": true
+      },
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "q",
+      {
+        "duration": "8",
+        "rest": true
+      },
+      "8",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "q",
+      {
+        "duration": "8",
+        "rest": true
+      },
+      "8",
+      "q"
+    ]
+  ]
+}

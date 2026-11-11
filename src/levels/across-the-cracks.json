@@ -1,0 +1,75 @@
+{
+  "id": "across-the-cracks",
+  "title": "Across the Cracks",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1100,
+  "bars": [
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      {
+        "duration": "8",
+        "tie": true
+      },
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      {
+        "duration": "8",
+        "rest": true
+      },
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "q",
+      "q",
+      "8",
+      {
+        "duration": "8",
+        "tie": true
+      }
+    ],
+    [
+      "8",
+      "8",
+      "q",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "8",
+      "8",
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      {
+        "duration": "q",
+        "tie": true
+      },
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "q",
+      "q",
+      "q"
+    ]
+  ]
+}
