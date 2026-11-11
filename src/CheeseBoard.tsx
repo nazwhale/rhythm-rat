@@ -14,7 +14,7 @@ function CheeseNote({ duration, dotted = false }: { duration: Duration; dotted?:
 
 export default function CheeseBoard() {
   return <section className="cheese-board" aria-labelledby="cheese-board-title">
-    <div className="cheese-board-heading"><h2 id="cheese-board-title">The cheese board</h2><span>A LITTLE RHYTHM KEY</span></div>
+    <div className="cheese-board-heading"><h2 id="cheese-board-title">The cheese board</h2></div>
     <dl className="cheese-key">
       <div><CheeseNote duration="q" /><dt>Crotchet <span>(quarter note)</span></dt><dd>Yellow wedge · 1 beat</dd></div>
       <div><CheeseNote duration="8" /><dt>Quaver <span>(eighth note)</span></dt><dd>Cheese wheel · ½ beat</dd></div>

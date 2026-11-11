@@ -1,7 +1,10 @@
 import * as Tone from 'tone'
 
+export type BiteSound = 'nom' | 'crunch' | 'pluck' | 'quiet'
+
 // A soft pitched bite with a very short, muffled crunch underneath.
-export function createRunAudio(muted: boolean) {
+export function createRunAudio(muted: boolean, initialSound: BiteSound = 'nom') {
+  let sound = initialSound
   const output = new Tone.Gain(muted ? 0 : 1).toDestination()
   const metronome = new Tone.Synth({
     oscillator: { type: 'sine' },
@@ -24,10 +27,14 @@ export function createRunAudio(muted: boolean) {
     munch() {
       // Avoid the transport lookahead so the bite responds to the actual tap.
       const time = Tone.immediate() + 0.005
-      bite.triggerAttackRelease('E4', 0.045, time, 0.7)
-      bite.frequency.exponentialRampToValueAtTime(Tone.Frequency('C4').toFrequency(), time + 0.065)
-      crunch.triggerAttackRelease(0.025, time, 0.5)
+      if (sound === 'quiet') return
+      if (sound !== 'crunch') {
+        bite.triggerAttackRelease(sound === 'pluck' ? 'G4' : 'E4', 0.045, time, sound === 'pluck' ? 0.6 : 0.7)
+        bite.frequency.exponentialRampToValueAtTime(Tone.Frequency(sound === 'pluck' ? 'E4' : 'C4').toFrequency(), time + 0.065)
+      }
+      if (sound !== 'pluck') crunch.triggerAttackRelease(0.025, time, sound === 'crunch' ? 0.85 : 0.5)
     },
+    setSound(value: BiteSound) { sound = value },
     setMuted(value: boolean) { output.gain.rampTo(value ? 0 : 1, 0.015) },
     dispose() {
       metronome.dispose()

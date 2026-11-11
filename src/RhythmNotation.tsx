@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react'
 import { Beam, Dot, Formatter, Renderer, Stave, StaveNote, StaveTie, Voice } from 'vexflow'
 import { SCROLL_PIXELS_PER_SECOND, createEvents, type Level } from './level'
 
-export type Judgement = 'perfect' | 'good' | 'miss' | 'extra'
+export type Judgement = 'perfect' | 'good' | 'early' | 'late' | 'miss' | 'extra'
 const EATEN_COLOR = '#c3cbc0'
-const COLORS: Record<Judgement, string> = { perfect: EATEN_COLOR, good: EATEN_COLOR, miss: '#dc594d', extra: '#7d7185' }
+const COLORS: Record<Judgement, string> = { perfect: EATEN_COLOR, good: EATEN_COLOR, early: EATEN_COLOR, late: EATEN_COLOR, miss: '#dc594d', extra: '#7d7185' }
 
 // Match the reference's rhythm-only engraving: arches connect stem tips.
 class StemTopTie extends StaveTie {
@@ -69,7 +69,7 @@ export function RhythmNotation({ marks, level }: { marks: Record<number, Judgeme
         const eaten = beam.getNotes().every((note) => {
           const event = events[rendered.indexOf(note as StaveNote)]
           const result = event.attackIndex === null ? undefined : marks[event.attackIndex]
-          return result === 'perfect' || result === 'good'
+          return !!result && result !== 'miss' && result !== 'extra'
         })
         if (eaten) beam.setStyle({ fillStyle: EATEN_COLOR, strokeStyle: EATEN_COLOR })
         beam.setContext(context).drawWithStyle()

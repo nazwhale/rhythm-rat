@@ -135,3 +135,40 @@
 @media(max-width:420px){.cheese-board-heading{align-items:flex-start;flex-direction:column;gap:5px}.cheese-key{gap:15px 10px}.cheese-key>div{padding-left:39px}.cheese-key dt span{display:block}.cheese-key dt{font-size:10px}.board-note{left:-4px}}
 
 svg.board-rest{width:28px;height:42px;left:4px;top:7px}
+
+/* Quiet play surface, with feedback where the player is looking. */
+.intro-row{padding:30px 3px 25px}
+.intro-row h1{font-size:clamp(32px,4.2vw,46px)}
+.sound-controls{display:flex;align-items:center;gap:8px}
+.sound-controls>label{font-size:11px;color:#87948a}
+.sound-controls select{font:11px 'DM Sans',sans-serif;color:#50614f;border:1px solid #dce4d8;background:#fafcf7;border-radius:7px;padding:9px 8px;max-width:125px}
+.runner-lane{height:280px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.play-footer{justify-content:space-between}
+.input-cue{font-size:12px;color:#829078}
+.touch-hint{display:none}
+.ready-cue{position:absolute;left:25%;bottom:112px;transform:translateX(-50%);color:#75856d;font:12px 'DM Sans',sans-serif;pointer-events:none}
+.run-notice{position:absolute;left:25%;bottom:155px;transform:translateX(-50%);font:600 20px 'Space Grotesk',sans-serif;color:#64795b;white-space:nowrap;z-index:4;animation:run-notice 2.2s ease both;pointer-events:none}
+@keyframes run-notice{0%{opacity:0;translate:0 8px}12%,70%{opacity:1;translate:0 0}100%{opacity:0;translate:0 -10px}}
+.note-feedback{position:absolute;bottom:83px;transform:translateX(-50%);font:600 14px 'Space Grotesk',sans-serif;white-space:nowrap;pointer-events:none;z-index:5;animation:note-feedback 1s ease-out both;color:#9c9f95}
+.note-feedback.perfect{color:#b79338;text-shadow:0 1px 8px #e6ca7b38}
+.note-feedback.early,.note-feedback.late{color:#ac9178}
+.note-feedback.miss{color:#c57568}
+@keyframes note-feedback{0%{opacity:0;translate:0 5px}12%,40%{opacity:1;translate:0 0}100%{opacity:0;translate:0 -14px}}
+.cheese-head.early,.cheese-head.late,.rhythm-cheese.early .cheese-strip,.rhythm-cheese.late .cheese-strip{visibility:hidden}
+.countin-overlay{left:calc(25% - 45px);right:auto;top:116px;width:90px;pointer-events:none}
+.countin-overlay>span{display:none}
+.countin-overlay .count-number{font-size:44px}
+.finish-hole{position:absolute;bottom:-1px;width:88px;height:88px;transform:translateX(-14px);z-index:1;pointer-events:none}
+.finish-hole>svg{width:100%;height:100%;overflow:visible}
+.level-won .rat{animation:rat-enter .85s ease-in forwards}
+@keyframes rat-enter{0%{transform:translateX(0);opacity:1}65%{opacity:1}100%{transform:translateX(60px) scale(.65);opacity:0}}
+.celebrating .party-guests{animation:party-bounce .32s steps(2,end) infinite alternate;transform-origin:center}
+.celebrating .party-disco,.celebrating .party-lights{animation:party-glint .7s steps(2,end) infinite alternate}
+.celebrating .party-confetti{animation:party-bounce .5s steps(2,end) infinite alternate}
+@keyframes party-bounce{to{transform:translateY(-4px)}}
+@keyframes party-glint{to{opacity:.45}}
+@media(pointer:coarse){.desktop-hint{display:none}.touch-hint{display:inline}}
+@media(max-width:800px){.sound-controls>label{display:none}.level-name{font-size:8px}.howto p span{max-width:180px;display:inline-block}}
+@media(max-width:560px){.topbar{flex-wrap:wrap;height:auto;min-height:88px;padding:12px 0;gap:9px}.brand{font-size:11px}.level-name{order:3;width:100%;font-size:8px}.sound-controls{margin-left:auto;gap:5px}.sound-controls select{font-size:10px;max-width:110px;padding:7px 5px}.intro-row{padding:22px 3px}.intro-row h1{font-size:34px}.howto{margin-top:12px}.runner-lane{height:260px}.ready-cue{left:26%;font-size:11px}.run-notice{left:50%;font-size:18px}.countin-overlay{left:calc(26% - 45px);top:110px}.note-feedback{font-size:12px}.input-cue{font-size:10px}.cheese-board{margin-bottom:20px}}
+@media(prefers-reduced-motion:reduce){.party-guests,.party-disco,.party-lights,.party-confetti{animation:none!important}}
+.run-notice{left:50%}

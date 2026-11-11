@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import * as Tone from 'tone'
 import { Cheese } from './Cheese'
+import FinishHole from './FinishHole'
 import CheeseBoard from './CheeseBoard'
-import { createRunAudio } from './audio'
+import { createRunAudio, type BiteSound } from './audio'
 import { RhythmNotation, type Judgement } from './RhythmNotation'
 import { ATTEMPTS_PER_LEVEL, createEvents, createOnsets, levelSeconds, nextChallenge, SCROLL_PIXELS_PER_SECOND, type Onset } from './level'
 import { LEVELS } from './levels'
-import { HIT_WINDOW_SECONDS, judgeTap, judgeRelease } from './timing'
+import { HIT_WINDOW_SECONDS, judgeTap, judgeRelease, type TapJudgement } from './timing'
 
 type Phase = 'ready' | 'countin' | 'playing' | 'finished'
 type Counts = { perfect: number; good: number; miss: number; extra: number; longest: number }
@@ -40,17 +41,20 @@ export default function App() {
   const beatSeconds = 60 / level.bpm
   const countInSeconds = level.beatsPerBar * beatSeconds
   const [phase, setPhase] = useState<Phase>('ready')
-  const [elapsed, setElapsed] = useState(0)
+  const [elapsed, setElapsed] = useState(-4 * 60 / LEVELS[0].bpm)
   const [countdown, setCountdown] = useState(4)
   const [muted, setMuted] = useState(false)
   const [marks, setMarks] = useState<Record<number, Judgement>>({})
-  const [counts, setCounts] = useState(EMPTY)
-  const [feedback, setFeedback] = useState('')
+  const [feedback, setFeedback] = useState<{ id: number; seconds: number; label: string; tone: string }[]>([])
+  const [notice, setNotice] = useState('')
+  const [sound, setSound] = useState<BiteSound>('nom')
+  const feedbackId = useRef(0)
+  const pointerId = useRef<number | null>(null)
   const [bitePulse, setBitePulse] = useState(0)
   const [eating, setEating] = useState(false)
   const [stumble, setStumble] = useState(false)
   const [holdingIndex, setHoldingIndex] = useState<number | null>(null)
-  const activeHold = useRef<{ onset: Onset; result: 'perfect' | 'good' } | null>(null)
+  const activeHold = useRef<{ onset: Onset; result: TapJudgement } | null>(null)
   const lastMunch = useRef(0)
   const synthRef = useRef<ReturnType<typeof createRunAudio> | null>(null)
   const gameStart = useRef(0)
@@ -58,16 +62,15 @@ export default function App() {
   const judged = useRef(new Set<number>())
   const streakRef = useRef(0)
   const countsRef = useRef(EMPTY)
-  const feedbackTimer = useRef<number | undefined>(undefined)
   const animFrame = useRef<number | undefined>(undefined)
   const biteTimer = useRef<number | undefined>(undefined)
 
   useEffect(() => { synthRef.current?.setMuted(muted) }, [muted])
+  useEffect(() => { synthRef.current?.setSound(sound) }, [sound])
 
   useEffect(() => () => {
     synthRef.current?.dispose()
     window.clearTimeout(biteTimer.current)
-    window.clearTimeout(feedbackTimer.current)
   }, [])
 
   const setMark = useCallback((index: number, result: Judgement) => {
@@ -83,23 +86,41 @@ export default function App() {
       streakRef.current = 0
     }
     countsRef.current = next
-    setCounts(next)
   }, [])
 
-  const showFeedback = useCallback((label: string, style: Judgement | 'early') => {
-    setFeedback(`${label}|${style}`)
-    window.clearTimeout(feedbackTimer.current)
-    feedbackTimer.current = window.setTimeout(() => setFeedback(''), 720)
+  const showFeedback = useCallback((label: string, style: Judgement | 'early', seconds?: number) => {
+    const position = seconds ?? Tone.getContext().rawContext.currentTime - gameStart.current
+    setFeedback((old) => [...old.slice(-7), { id: ++feedbackId.current, seconds: position, label, tone: style }])
+  }, [])
+
+  const prepare = useCallback((next: { levelIndex: number; attempt: number }, message = '') => {
+    runGeneration.current++
+    synthRef.current?.dispose(); synthRef.current = null
+    if (animFrame.current) cancelAnimationFrame(animFrame.current)
+    window.clearTimeout(biteTimer.current)
+    activeHold.current = null; setHoldingIndex(null); pointerId.current = null
+    judged.current = new Set(); streakRef.current = 0; countsRef.current = { ...EMPTY }
+    setChallenge(next); setPhase('ready')
+    const nextLevel = LEVELS[next.levelIndex]
+    setElapsed(-nextLevel.beatsPerBar * 60 / nextLevel.bpm)
+    setCountdown(4); setMarks({}); setFeedback([])
+    setEating(false); setStumble(false); setNotice(message)
   }, [])
 
   const finish = useCallback(() => {
-    setPhase('finished')
+    const result = countsRef.current
+    const complete = result.miss === 0 && result.extra === 0 && result.perfect + result.good === onsets.length
+    if (!complete) {
+      const next = nextChallenge(challenge, false, LEVELS.length)
+      prepare(next, next.levelIndex === challenge.levelIndex ? 'Second bite' : `Next up · ${LEVELS[next.levelIndex].title}`)
+      return
+    }
+    setPhase('finished'); setElapsed(totalSeconds)
     activeHold.current = null; setHoldingIndex(null); setEating(false)
     window.clearTimeout(biteTimer.current)
-    synthRef.current?.dispose()
-    synthRef.current = null
+    synthRef.current?.dispose(); synthRef.current = null
     if (animFrame.current) cancelAnimationFrame(animFrame.current)
-  }, [])
+  }, [challenge, onsets.length, prepare, totalSeconds])
 
   const begin = useCallback(async () => {
     const generation = ++runGeneration.current
@@ -112,13 +133,13 @@ export default function App() {
     activeHold.current = null; setHoldingIndex(null)
     streakRef.current = 0
     countsRef.current = { ...EMPTY }
-    setCounts({ ...EMPTY }); setMarks({}); setElapsed(-countInSeconds)
+    setMarks({}); setElapsed(-countInSeconds)
     setEating(false); setStumble(false)
     window.clearTimeout(biteTimer.current)
-    setPhase('countin'); setCountdown(level.beatsPerBar); setFeedback('')
+    setPhase('countin'); setCountdown(level.beatsPerBar); setFeedback([])
     const ctx = Tone.getContext().rawContext
     synthRef.current?.dispose()
-    const audio = createRunAudio(muted)
+    const audio = createRunAudio(muted, sound)
     synthRef.current = audio
     const synth = audio.metronome
     const now = ctx.currentTime + 0.12
@@ -128,7 +149,7 @@ export default function App() {
     for (let i = 0; i < level.bars.length * level.beatsPerBar; i++) {
       synth.triggerAttackRelease(i % level.beatsPerBar === 0 ? 'C6' : 'G5', '32n', gameStart.current + i * beat, 0.2)
     }
-  }, [muted, level, countInSeconds, beatSeconds])
+  }, [muted, sound, level, countInSeconds, beatSeconds])
 
   useEffect(() => {
     if (phase !== 'countin' && phase !== 'playing') return
@@ -164,33 +185,13 @@ export default function App() {
     return () => { if (animFrame.current) cancelAnimationFrame(animFrame.current) }
   }, [phase, finish, setMark, showFeedback, updateCount, level, onsets, countInSeconds, beatSeconds, totalSeconds])
 
-  const hits = counts.perfect + counts.good
-  const passed = counts.miss === 0 && counts.extra === 0 && hits === onsets.length
   const advance = useCallback(() => {
-    const next = nextChallenge(challenge, passed, LEVELS.length)
-    setChallenge(next)
-    if (next.levelIndex === challenge.levelIndex) {
-      void begin()
-    } else {
-      setPhase('ready'); setElapsed(0); setMarks({}); setCounts({ ...EMPTY })
-      countsRef.current = { ...EMPTY }; judged.current = new Set()
-      setFeedback(''); setEating(false); setStumble(false)
-      window.clearTimeout(feedbackTimer.current); window.clearTimeout(biteTimer.current)
-    }
-  }, [challenge, passed, begin])
+    prepare(nextChallenge(challenge, true, LEVELS.length))
+  }, [challenge, prepare])
 
   const selectLevel = useCallback((levelIndex: number) => {
-    if (!LEVELS[levelIndex]) return
-    runGeneration.current++
-    synthRef.current?.dispose(); synthRef.current = null
-    if (animFrame.current) cancelAnimationFrame(animFrame.current)
-    window.clearTimeout(biteTimer.current); window.clearTimeout(feedbackTimer.current)
-    activeHold.current = null; setHoldingIndex(null)
-    judged.current = new Set(); streakRef.current = 0; countsRef.current = { ...EMPTY }
-    setChallenge({ levelIndex, attempt: 1 })
-    setPhase('ready'); setElapsed(0); setCountdown(4); setMarks({}); setCounts({ ...EMPTY })
-    setFeedback(''); setEating(false); setStumble(false)
-  }, [])
+    if (LEVELS[levelIndex]) prepare({ levelIndex, attempt: 1 })
+  }, [prepare])
 
   const press = useCallback(() => {
     if (phase === 'finished') { advance(); return }
@@ -210,10 +211,10 @@ export default function App() {
     if (candidate.holdSeconds > 0) {
       activeHold.current = { onset: candidate, result }
       setHoldingIndex(candidate.index); lastMunch.current = now
-      showFeedback('HOLD', result)
+      showFeedback(result === 'perfect' ? 'Perfect' : result === 'good' ? 'Good' : result === 'early' ? 'Early' : 'Late', result, candidate.seconds)
     } else {
       judged.current.add(candidate.index)
-      setMark(candidate.index, result); updateCount(result); showFeedback(result.toUpperCase(), result)
+      setMark(candidate.index, result); updateCount(result === 'perfect' ? 'perfect' : 'good'); showFeedback(result === 'perfect' ? 'Perfect' : result === 'good' ? 'Good' : result === 'early' ? 'Early' : 'Late', result, candidate.seconds)
     }
     synthRef.current?.munch()
     setBitePulse((p) => p + 1); setEating(true)
@@ -230,16 +231,20 @@ export default function App() {
       setMark(hold.onset.index, 'miss'); updateCount('miss'); showFeedback('HOLD MISSED', 'miss'); setStumble(true); finish(); return
     }
     judged.current.add(hold.onset.index)
-    setMark(hold.onset.index, hold.result); updateCount(hold.result); showFeedback('YUM!', hold.result)
+    setMark(hold.onset.index, hold.result); updateCount(hold.result === 'perfect' ? 'perfect' : 'good')
   }, [setMark, updateCount, showFeedback, finish])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.code !== 'Space' || event.repeat) return
-      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea')) return
+      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button')) return
       event.preventDefault(); press()
     }
-    const onRelease = (event: KeyboardEvent) => { if (event.code === 'Space') { event.preventDefault(); release() } }
+    const onRelease = (event: KeyboardEvent) => {
+      if (event.code !== 'Space') return
+      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button')) return
+      event.preventDefault(); release()
+    }
     const onBlur = () => {
       if (activeHold.current) { updateCount('miss'); setStumble(true); finish() }
     }
@@ -253,34 +258,46 @@ export default function App() {
     }
   }, [press, release, updateCount, finish])
 
-  const [label, tone] = feedback.split('|')
   const levelProgress = Math.max(0, Math.min(1, elapsed / totalSeconds))
 
   return <main className="app-shell">
     <header className="topbar">
       <a className="brand" href="#" onClick={(e) => e.preventDefault()}><span className="brand-mark">♪</span><span>RHYTHM<span className="brand-light">RAT</span></span></a>
       <div className="level-name"><span className="level-dot" /> LEVEL {String(challenge.levelIndex + 1).padStart(2, '0')} <b>·</b> {level.title.toUpperCase()}</div>
-      <button className="sound-toggle" onClick={() => setMuted((v) => !v)} aria-label={muted ? 'Unmute sound' : 'Mute sound'}><span>{muted ? '◌' : '♫'}</span> {muted ? 'SOUND OFF' : 'SOUND ON'}</button>
+      <div className="sound-controls"><label htmlFor="bite-sound">Bite sound</label><select id="bite-sound" value={sound} onChange={(event) => setSound(event.target.value as BiteSound)}>
+        <option value="nom">Soft nom</option><option value="crunch">Crunch</option><option value="pluck">Musical</option><option value="quiet">No bite sound</option>
+      </select>
+      <button className="sound-toggle" onClick={() => setMuted((v) => !v)} aria-label={muted ? 'Unmute sound' : 'Mute sound'}><span>{muted ? '◌' : '♫'}</span> {muted ? 'SOUND OFF' : 'SOUND ON'}</button></div>
     </header>
 
-    {import.meta.env.DEV && <div className="admin-toolbar">
-      <label htmlFor="admin-level">DEV · LEVEL PICKER</label>
+    <div className="admin-toolbar">
+      <label htmlFor="admin-level">LEVEL PICKER</label>
       <select id="admin-level" value={challenge.levelIndex} onChange={(event) => selectLevel(Number(event.target.value))}>
         {LEVELS.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
       </select>
-    </div>}
+    </div>
 
     <section className="intro-row">
-      <div><p className="eyebrow">A LITTLE RHYTHM ADVENTURE</p><h1>Read the beat.<br/><em>Eat to the beat.</em></h1></div>
-      <div className="howto"><div className="keycap">SPACE</div><p>{hasHolds ? 'Tap notes. Hold ties.' : 'Tap once for every note.'}<br/><span>{hasHolds ? 'Hold for cheese strips. Stay quiet on rests.' : 'Catch the cheese right on the beat.'}</span></p></div>
+      <div><h1>Eat to the beat.</h1></div>
+      <div className="howto"><div className="keycap"><span className="desktop-hint">SPACE</span><span className="touch-hint">TAP</span></div><p>{hasHolds ? 'Tap notes. Hold ties.' : 'Tap once for every note.'}<br/><span>{hasHolds ? 'Release at the tie target. Don’t press on rests.' : ''}</span></p></div>
     </section>
 
     <section className="game-card">
-      <div className="game-heading"><div className="game-status"><strong className="time-signature" aria-label="4/4 time">4/4</strong><span className="live-dot" /> {phase === 'playing' ? 'IN THE GROOVE' : phase === 'countin' ? 'GET READY' : phase === 'finished' ? (passed ? 'LEVEL COMPLETE' : 'LEVEL FAILED') : 'YOUR SCORE'}</div><div className="bpm"><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
+      <div className="game-heading"><div className="game-status"><strong className="time-signature" aria-label="4/4 time">4/4</strong><span className="live-dot" /> {phase === 'finished' ? 'Complete' : phase === 'countin' ? 'Count in' : level.title}</div><div className="bpm"><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
 
-      <div className={`runner-lane ${stumble ? 'lane-stumble' : ''}`}>
+      <div className={`runner-lane ${stumble ? 'lane-stumble' : ''} ${phase === 'finished' ? 'level-won' : ''}`}
+        onPointerDown={(event) => {
+          if (event.button !== 0 || pointerId.current !== null) return
+          event.preventDefault(); pointerId.current = event.pointerId
+          event.currentTarget.setPointerCapture(event.pointerId); press()
+        }}
+        onPointerUp={(event) => { if (pointerId.current === event.pointerId) { pointerId.current = null; release() } }}
+        onPointerCancel={(event) => { if (pointerId.current === event.pointerId) { pointerId.current = null; if (activeHold.current) { updateCount('miss'); finish() } } }}
+        onLostPointerCapture={(event) => { if (pointerId.current === event.pointerId) { pointerId.current = null; if (activeHold.current) { updateCount('miss'); finish() } } }}>
+        {notice && <div key={notice + challenge.attempt + challenge.levelIndex} className="run-notice" onAnimationEnd={() => setNotice('')}>{notice}</div>}
+        {phase === 'ready' && <div className="ready-cue"><span className="desktop-hint">Space to start</span><span className="touch-hint">Tap to start</span></div>}
       <div className="level-progress-row">
-        <div className="level-progress-label"><span>LEVEL PROGRESS</span><span>{Math.floor(levelProgress * 100)}%</span></div>
+
         <div className="level-progress-track" role="progressbar" aria-label="Level progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(levelProgress * 100)}>
           <div className="progress-journey" aria-hidden="true">
             <div className="progress-path" />
@@ -316,6 +333,10 @@ export default function App() {
             {onset.holdSeconds > 0 && <span className="cheese-strip" style={{ width: onset.holdSeconds * SCROLL_PIXELS_PER_SECOND, clipPath: `inset(0 0 0 ${holdingIndex === onset.index ? Math.max(0, Math.min(100, (elapsed - onset.seconds) / onset.holdSeconds * 100)) : 0}%)` }} />}
 
           </div>)}
+          <FinishHole tier={challenge.levelIndex} celebrating={phase === 'finished'} left={totalSeconds * SCROLL_PIXELS_PER_SECOND} />
+          {feedback.map((item) => <span key={item.id} className={`note-feedback ${item.tone}`}
+            style={{ left: item.seconds * SCROLL_PIXELS_PER_SECOND }}
+            onAnimationEnd={() => setFeedback((old) => old.filter((entry) => entry.id !== item.id))}>{item.label}</span>)}
           {events.filter((event) => !event.rest).map((event) => <div key={`head-${event.index}`}
             className={`cheese-head ${marks[event.attackIndex!] ?? ''} ${holdingIndex === event.attackIndex && elapsed >= event.seconds - HIT_WINDOW_SECONDS ? 'being-eaten' : ''}`}
             style={{ left: event.seconds * SCROLL_PIXELS_PER_SECOND }}>
@@ -324,40 +345,19 @@ export default function App() {
         </div>
         <Rat holding={holdingIndex !== null} eating={eating} stumble={stumble} pulse={bitePulse} />
         
-        <div className="lane-caption"><span>CROTCHET · WEDGE &nbsp; / &nbsp; QUAVER · WHEEL</span><span>{hasHolds ? 'TIES · HOLD THE STRIP' : 'ONE NOTE · ONE BITE'}</span></div>
+
       </div>
 
       <div className="play-footer">
         <span className="attempt-indicator">BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
-        <div className="feedback-slot">{feedback && <span className={`feedback ${tone}`}>{label}</span>}</div>
-        {phase === 'ready' ? <button className="start-button" onClick={() => void begin()}>LET’S EAT <span>→</span></button> : phase === 'countin' ? <div className="countin-chip"><span>{countdown || 'GO!'}</span> COUNT IN</div> : phase === 'playing' ? <div className="playing-chip"><span className="equalizer"><i/><i/><i/></span> LISTEN &amp; PLAY</div> : <button className="start-button" onClick={advance}>{passed || challenge.attempt === ATTEMPTS_PER_LEVEL ? 'NEXT LEVEL' : 'SECOND BITE'} <span>→</span></button>}
+        {phase === 'ready' ? <button className="start-button" onClick={() => void begin()}>LET’S EAT <span>→</span></button> : phase === 'countin' ? <span className="input-cue">Listen…</span> : phase === 'playing' ? <span className="input-cue"><span className="desktop-hint">Space to eat{hasHolds ? ' · hold for ties' : ''}</span><span className="touch-hint">Tap to eat{hasHolds ? ' · hold for ties' : ''}</span></span> : <button className="start-button" onClick={advance}>NEXT LEVEL <span>→</span></button>}
       </div>
 
 
-      {phase === 'ready' && <div className="start-overlay"><div className="overlay-card"><div className="overlay-icon">▶</div><p>READY WHEN YOU ARE</p><span>Press start, listen to the count-in,<br/>then tap <b>SPACE</b> with the notes.
-        {hasHolds && <><br/>Hold until the tied-to note arrives, then release.<br/>Rests mean no press.</>}</span><small>{level.bars.length} BARS · {onsets.some((note) => note.duration === '8') ? 'CROTCHETS & QUAVERS' : 'CROTCHETS'} · {level.bpm} BPM</small></div></div>}
       {phase === 'countin' && <div className="countin-overlay"><div className="count-number">{countdown || 'GO!'}</div><span>COUNT IN</span></div>}
-      {phase === 'finished' && <div className="result-overlay"><div className="result-card">
-        <div className={`result-icon pixel-result ${passed ? 'pass' : 'fail'}`}>
-          {passed ? <svg viewBox="0 0 24 24" shapeRendering="crispEdges" role="img" aria-label="Level complete">
-            <path d="M18 4h4v4h-4v4h-4v4h-4v4H6v-4H2v-4h4v4h4v-4h4V8h4z" />
-          </svg> : <svg viewBox="0 0 32 24" shapeRendering="crispEdges" role="img" aria-label="Pixel mousetrap">
-            <path fill="#b78a59" d="M2 14h28v8H2z" />
-            <path fill="#dbb880" d="M2 13h28v6H2z" />
-            <path fill="#687572" d="M5 3h20v2H7v11H5zm18 2h2v11h-2zM5 15h20v2H5z" />
-            <path fill="#465550" d="M13 12h2v6h-2zm4 0h2v6h-2z" />
-            <path fill="#f3cd62" d="M18 8h6v5h-8v-3h2z" />
-            <path fill="#c59638" d="M20 10h2v2h-2z" />
-          </svg>}
-
-        </div>
-        <p className="eyebrow">{passed ? 'LEVEL COMPLETE' : 'LEVEL FAILED'}</p>
-        {!passed && <p className="attempt-message">{challenge.attempt < ATTEMPTS_PER_LEVEL ? 'One more bite at the cheese.' : 'Two bites used. Try a different level.'}</p>}
-        <button className="start-button retry" onClick={advance}>{passed || challenge.attempt === ATTEMPTS_PER_LEVEL ? 'NEXT LEVEL' : 'SECOND BITE'} <span>→</span></button>
-      </div></div>}
 
     </section>
     <CheeseBoard />
-    <footer className="page-footer"><span>ONE BEAT AT A TIME.</span><span>MADE FOR THE LOVE OF RHYTHM <b>✦</b></span></footer>
+
   </main>
 }

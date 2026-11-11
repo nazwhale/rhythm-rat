@@ -1,6 +1,6 @@
 # Rhythm Rat levels
 
-Each JSON file is discovered automatically. Levels currently run in ascending order of their provisional rating, starting with Steady Bites. Passing advances immediately; failing offers one retry, then advances. After the final level, the sequence loops. Attempts are per encounter and reset on a new level or page reload.
+Each JSON file is discovered automatically. Levels currently run in ascending order of their provisional rating, starting with Steady Bites. Passing ends in the mouse hole; continue to the next level with Space, a tap or Next Level. The first failure immediately reloads the same level with a fading “Second bite” notice. The second failure immediately loads the next level. From either ready scene, Space or a tap starts the one-bar count-in. After the final level, the sequence loops. Attempts are per encounter and reset on a new level or page reload.
 
 ```json
 {
@@ -66,4 +66,11 @@ All levels stay at 110 BPM and eight bars. The four stepping-stone ratings sit b
 | 7 | Rest & Relish | Mixed rests, syncopation, frequent ties and dotted crotchets |
 | 8 | Midnight Munch | Denser combinations, repeated cross-bar ties and a final minim |
 
-The stepping stones deliberately repeat patterns and include recovery bars. Dotted durations and minims remain in the last two levels. Adding the JSON files automatically includes them in the development picker and normal progression.
+The stepping stones deliberately repeat patterns and include recovery bars. Dotted durations and minims remain in the last two levels. Adding the JSON files automatically includes them in the public level picker and normal progression.
+
+
+## Play feedback and sound
+
+Tap/Space timing uses the same 120 ms acceptance window. Perfect is within 35 ms, Good within 75 ms, and accepted Early/Late taps occupy the outer part of that window. Feedback floats above the corresponding note and travels with it while fading. Touch/pointer down starts a bite or hold; pointer up releases a hold, and cancellation or loss of focus fails an active hold.
+
+Bite sounds can be switched live between Soft nom, Crunch, Musical, and No bite sound. The main sound toggle also mutes the metronome. The finish hole is empty in Steady Bites, then adds guests, party hats, a disco ball, confetti, poppers and lights across the later levels.
