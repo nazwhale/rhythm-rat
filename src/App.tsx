@@ -13,7 +13,7 @@ import { ATTEMPTS_PER_LEVEL, createEvents, createOnsets, levelSeconds, nextChall
 import { LEVELS } from './levels'
 import { HIT_WINDOW_SECONDS, judgeTap, judgeRelease, type TapJudgement } from './timing'
 
-type Phase = 'ready' | 'countin' | 'playing' | 'finished'
+type Phase = 'ready' | 'countin' | 'playing' | 'finished' | 'lost'
 type Counts = { perfect: number; good: number; miss: number; extra: number; longest: number }
 const EMPTY: Counts = { perfect: 0, good: 0, miss: 0, extra: 0, longest: 0 }
 
@@ -38,6 +38,29 @@ function Rat({ eating, holding, stumble, pulse, bite }: { eating: boolean; holdi
       <span className="cheese-crumbs" aria-hidden="true"><i/><i/><i/><i/><i/></span>
     </>}
   </div>
+}
+
+function Mousetrap() {
+  return <svg className="loss-trap" viewBox="0 0 96 56" shapeRendering="crispEdges" role="img" aria-label="Pixel art mousetrap with a fallen rat and a piece of cheese">
+    <path fill="#541e2b" d="M8 47h80v5H8z" />
+    <path fill="#9c553c" d="M8 30h80v16H8z" />
+    <path fill="#d59a62" d="M8 30h80v11H8z" />
+    <path fill="#edbe80" d="M12 32h72v3H12z" />
+    <path fill="#b57649" d="M14 38h14v2H14zm52 0h14v2H66z" />
+    <path fill="#f2c75d" d="M64 24h14v9H60v-5h4z" />
+    <path fill="#ffe59a" d="M64 24h14l-7-7z" />
+    <path fill="#bd7d38" d="M65 28h3v3h-3zm9-2h2v2h-2z" />
+    <path fill="#d58b99" d="M15 30h9v-4H12v-5H8v8h7z" />
+    <path fill="#777582" d="M23 22h6v-4h19v3h8v5h7v7H23z" />
+    <path fill="#b7aab4" d="M27 22h20v2h8v6H27z" />
+    <path fill="#777582" d="M43 15h8v10h-8z" />
+    <path fill="#e1a5ae" d="M45 17h4v5h-4zM61 27h4v3h-4zM29 32h6v3h-6zm19 0h6v3h-6z" />
+    <path fill="#392c3c" d="M54 24h2v2h2v2h-2v-2h-2zm4 0h2v2h-2zm-4 4h2v2h-2z" />
+    <path fill="#635d69" d="M36 8h4v28h-4zM36 8h44v4H36zm40 4h4v24h-4zM36 34h44v4H36z" />
+    <path fill="#e3d7d9" d="M37 8h2v26h-2zm2 0h39v2H39zm38 2h2v24h-2zM40 34h36v2H40z" />
+    <path fill="#837d88" d="M35 33h7v7h-7zm8 0h3v7h-3zm4 0h3v7h-3z" />
+    <path fill="#f2a0a3" d="M22 6h3v6h-3zm-8 8h6v3h-6zm15-9h3v5h-3z" />
+  </svg>
 }
 
 // Tiny grid-aligned sprites keep the HUD in the same pixel style as the rat.
@@ -79,6 +102,11 @@ export default function App() {
   const [marks, setMarks] = useState<Record<number, Judgement>>({})
   const [feedback, setFeedback] = useState<{ id: number; seconds: number; label: string; tone: string }[]>([])
   const [notice, setNotice] = useState('')
+  const anotherLevelButton = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (phase === 'lost') anotherLevelButton.current?.focus({ preventScroll: true })
+  }, [phase])
   const [sound, setSound] = useState<BiteSound>('nom')
   const feedbackId = useRef(0)
   const pointerId = useRef<number | null>(null)
@@ -151,7 +179,8 @@ export default function App() {
     const complete = result.miss === 0 && result.extra === 0 && result.perfect + result.good === onsets.length
     if (!complete) {
       const next = nextChallenge(challenge, false, LEVELS.length)
-      prepare(next, next.attempt > 1 ? 'Second bite' : `Try again · ${LEVELS[next.levelIndex].title}`)
+      prepare(next, next.attempt > 1 ? 'Second bite' : '')
+      if (next.attempt === 1) setPhase('lost')
       return
     }
     synthRef.current?.continueMusic()
@@ -248,6 +277,7 @@ export default function App() {
   }, [prepare])
 
   const press = useCallback(() => {
+    if (phase === 'lost') return
     if (phase === 'finished') { advance(); return }
     if (phase === 'ready') { void begin(); return }
     const now = Tone.getContext().rawContext.currentTime - gameStart.current
@@ -342,7 +372,7 @@ export default function App() {
     </section>
 
     <section className="game-card">
-      <div className="game-heading"><div className="game-status"><span className="live-dot" /> {phase === 'finished' ? 'Complete' : phase === 'countin' ? 'Count in' : level.title}</div><div className="bpm"><strong className="time-signature" aria-label="4/4 time">4/4</strong><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
+      <div className="game-heading"><div className="game-status"><span className="live-dot" /> {phase === 'lost' ? 'Caught!' : phase === 'finished' ? 'Complete' : phase === 'countin' ? 'Count in' : level.title}</div><div className="bpm"><strong className="time-signature" aria-label="4/4 time">4/4</strong><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
 
       <div className={`runner-lane ${stumble ? 'lane-stumble' : ''} ${phase === 'finished' ? 'level-won' : ''}`}
         onPointerDown={(event) => {
@@ -433,9 +463,23 @@ export default function App() {
 
       <div className="play-footer">
         <span className="attempt-indicator">BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
-        {phase === 'ready' ? <button className="start-button" onClick={() => void begin()}>LET’S EAT <span>→</span></button> : phase === 'countin' ? <span className="input-cue">Listen…</span> : phase === 'playing' ? <span className="input-cue"><span className="desktop-hint">Space to eat{hasHolds ? ' · hold for ties' : ''}</span><span className="touch-hint">Tap to eat{hasHolds ? ' · hold for ties' : ''}</span></span> : <button className="start-button" onClick={advance}>NEXT LEVEL <span>→</span></button>}
+        {phase === 'ready' ? <button className="start-button" onClick={() => void begin()}>LET’S EAT <span>→</span></button> : phase === 'countin' ? <span className="input-cue">Listen…</span> : phase === 'playing' ? <span className="input-cue"><span className="desktop-hint">Space to eat{hasHolds ? ' · hold for ties' : ''}</span><span className="touch-hint">Tap to eat{hasHolds ? ' · hold for ties' : ''}</span></span> : phase === 'lost' ? <span className="input-cue">The cheese can wait.</span> : <button className="start-button" onClick={advance}>NEXT LEVEL <span>→</span></button>}
       </div>
 
+
+      {phase === 'lost' && <section className="loss-overlay" aria-labelledby="loss-title">
+        <div className="loss-card">
+          <span className="loss-eyebrow">END OF THE RAT RUN</span>
+          <Mousetrap />
+          <h2 id="loss-title">Oh, snap.</h2>
+          <p>The trap got you. There’s more cheese out there.</p>
+          <div className="loss-next"><span>NEXT NIBBLE</span><strong>{level.title}</strong></div>
+          <button ref={anotherLevelButton} className="loss-button" onClick={(event) => {
+            event.currentTarget.blur()
+            void begin()
+          }}>ANOTHER LEVEL <span aria-hidden="true">→</span></button>
+        </div>
+      </section>}
 
       {phase === 'countin' && <div className="countin-overlay"><div className="count-number">{countdown || 'GO!'}</div><span>COUNT IN</span></div>}
 

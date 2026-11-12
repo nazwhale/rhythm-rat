@@ -365,3 +365,34 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
 .bpm .time-signature { font-size: 15px; padding-right: 10px; margin-right: 3px; }
 .lamp-bar-number { font: 700 10px 'DM Mono', monospace; fill: #34432f; letter-spacing: 0; }
 @media(max-width:560px) { .bpm .time-signature { font-size: 12px; padding-right: 7px; margin-right: 0; } }
+
+/* A final loss pauses the run until the player chooses the next nibble. */
+.loss-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 40%, #813e49, #351e2c 85%);
+  color: #fff0df;
+}
+.loss-card { width: min(360px, 100%); text-align: center; }
+.loss-eyebrow { color: #f1a5a7; font: 10px 'DM Mono', monospace; letter-spacing: .18em; }
+.loss-trap { display: block; width: 192px; max-width: 90%; height: auto; margin: 12px auto 8px; image-rendering: pixelated; }
+.loss-card h2 { margin: 0 0 8px; color: #fff0df; font: 600 42px/1 'Space Grotesk', sans-serif; letter-spacing: -.04em; }
+.loss-card p { margin: 0 auto 18px; max-width: 270px; color: #ebbbc0; font: 14px/1.5 'DM Sans', sans-serif; }
+.loss-next { display: grid; gap: 5px; margin-bottom: 18px; }
+.loss-next span { color: #e3a0aa; font: 9px 'DM Mono', monospace; letter-spacing: .14em; }
+.loss-next strong { color: #fff0df; font: 500 16px 'Space Grotesk', sans-serif; }
+.loss-button { min-height: 46px; padding: 13px 24px; border: 2px solid #ffd2ad; border-radius: 4px; box-shadow: 4px 4px 0 #261723; background: #f3c99a; color: #452332; font: 600 11px 'DM Mono', monospace; letter-spacing: .08em; }
+.loss-button span { margin-left: 18px; }
+.loss-button:hover { background: #ffe2bc; }
+.loss-button:focus-visible { outline: 3px solid #fff0df; outline-offset: 5px; }
+@media (max-width: 560px) {
+  .loss-overlay { padding: 16px; }
+  .loss-trap { width: 160px; margin-top: 10px; }
+  .loss-card h2 { font-size: 36px; }
+  .loss-card p { font-size: 13px; margin-bottom: 12px; }
+  .loss-next { margin-bottom: 14px; }
+}

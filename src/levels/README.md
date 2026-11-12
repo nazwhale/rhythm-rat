@@ -1,6 +1,6 @@
 # Rhythm Rat levels
 
-Each JSON file is discovered automatically. Levels currently run in ascending order of their provisional rating, starting with Tiny Nibbles. Passing ends in the mouse hole; continue to the next level with Space, a tap or Next Level. The first failure immediately reloads the same level with a fading “Second bite” notice. The second failure immediately loads the previous, easier level (or stays on Tiny Nibbles if already at the easiest level). Only a win advances to a harder level. From either ready scene, Space or a tap starts the one-bar count-in. After winning the final level, the sequence loops. Attempts are per encounter and reset on a new level or page reload.
+Each JSON file is discovered automatically. Levels currently run in ascending order of their provisional rating, starting with Tiny Nibbles. Passing ends in the mouse hole; continue to the next level with Space, a tap or Next Level. The first failure immediately reloads the same level with a fading “Second bite” notice. The second failure shows a red pixel-art mousetrap loss screen and selects the previous, easier level (or stays on Tiny Nibbles if already at the easiest level). The Another Level button starts that level’s count-in immediately; it also supports Enter or Space when focused. Only a win advances to a harder level. From either ready scene, Space or a tap starts the one-bar count-in. After winning the final level, the sequence loops. Attempts are per encounter and reset on a new level or page reload.
 
 ```json
 {
