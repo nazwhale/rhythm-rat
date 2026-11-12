@@ -65,12 +65,24 @@ All levels stay at 110 BPM and eight bars. Six beginner additions precede The Fi
 | 6 | Steady Bites | Crotchets |
 | 7 | Around the Block | One quaver pair in alternating bars, with minims and recovery bars |
 | 8 | The First Lap | Multiple quaver pairs per bar |
-| 9 | Pause for Cheese | Quarter-note rests in repeated familiar patterns |
-| 10 | Offbeat Nibbles | Eighth-note rests and off-beat entries, without holds |
-| 11 | A Little Stretch | Exactly one quarter-to-quarter hold in bar four, surrounded by familiar bars |
-| 12 | Across the Cracks | Three holds: one short, one across a bar line, and one familiar longer hold |
-| 13 | Rest & Relish | Mixed rests, syncopation, frequent ties and dotted crotchets |
-| 14 | Midnight Munch | Denser combinations, repeated cross-bar ties and a final minim |
+| 9 | Crumb Trail | Paired eighths on beats one, two and three |
+| 10 | Pantry Patrol | Paired eighths moving through the middle beats |
+| 11 | Whisker Shuffle | Eighth-note pairs at the start and end of the bar |
+| 12 | Scamper Squares | Two adjacent eighth-note pairs, with recovery bars |
+| 13 | Cheddar Chase | Two-pair combinations across different beats |
+| 14 | Pause for Cheese | Quarter-note rests in repeated familiar patterns |
+| 15 | Quiet Cupboard | Quarter rests on beat three after familiar eighth pairs |
+| 16 | Peek and Squeak | Quarter rests on beat two before familiar eighth pairs |
+| 17 | Tail End Treats | Quarter rests on beat four, without offbeat entries |
+| 18 | Tiptoe Treats | Quarter rests on beats two and three, with repeated recovery bars |
+| 19 | Snack and Snooze | Two eighth pairs around a single quarter rest |
+| 20 | Offbeat Nibbles | Eighth-note rests and off-beat entries, without holds |
+| 21 | A Little Stretch | Exactly one quarter-to-quarter hold in bar four, surrounded by familiar bars |
+| 22 | Across the Cracks | Three holds: one short, one across a bar line, and one familiar longer hold |
+| 23 | Rest & Relish | Mixed rests, syncopation, frequent ties and dotted crotchets |
+| 24 | Midnight Munch | Denser combinations, repeated cross-bar ties and a final minim |
+
+Ten additional practice levels surround The First Lap and Pause for Cheese: five use quarter notes and paired eighth notes, and five add only quarter-note rests before Offbeat Nibbles. Each repeats short patterns and includes bars without rests; none introduces ties, dotted notes, or offbeat rest entries.
 
 The stepping stones deliberately repeat patterns and include recovery bars. Dotted durations remain in the last two levels; beginner minims are untied taps with a two-beat gap before the next note. Adding the JSON files automatically includes them in the public level picker and normal progression.
 
