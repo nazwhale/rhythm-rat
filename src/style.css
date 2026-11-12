@@ -184,8 +184,8 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
 .scenery-layer{position:absolute;left:0;display:flex;width:3840px;will-change:transform}
 .scenery-tile{width:960px;flex:0 0 960px;height:100%}
 .scenery-tile>svg{display:block;width:100%;height:100%}
-.scenery-skyline{bottom:39px;height:160px;color:#dfe7d9;opacity:.30}
-.scenery-street{bottom:39px;height:150px;color:#b9c7ae;opacity:.32}
+.scenery-skyline{bottom:39px;height:180px;color:#c3cfbd;opacity:.48}
+.scenery-street{bottom:39px;height:150px;color:#a3b197;opacity:.48}
 .streetlamp-light{fill:#e7cc85;animation:streetlamp-flicker 13s linear infinite;animation-play-state:paused}
 .streetlamp-halo{opacity:.12}
 .lamp-1{animation-duration:19s;animation-delay:-7s}
@@ -396,3 +396,18 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
   .loss-card p { font-size: 13px; margin-bottom: 12px; }
   .loss-next { margin-bottom: 14px; }
 }
+
+/* The settlement grows with the level's place in the difficulty order. */
+.world-scenery { --scenery-wall: #b5c4a8; --scenery-roof: #a3a88d; --scenery-glass: #f7f2d4; --scenery-timber: #a7987c; --scenery-leaf: #a6bd91; --scenery-leaf-light: #c4d3ad; --scenery-shop: #bda98e; }
+.scenery-town { --scenery-wall: #b7c5bf; --scenery-roof: #8faaa2; --scenery-glass: #f8efd0; --scenery-shop: #bca19c; }
+.scenery-city { --scenery-wall: #aebdca; --scenery-roof: #889ead; --scenery-glass: #f6edd2; --scenery-shop: #b7a4bd; }
+.scenery-building { fill: var(--scenery-wall); }
+.scenery-roof { fill: var(--scenery-roof); }
+.scenery-window { fill: var(--scenery-glass); }
+.scenery-wood { fill: var(--scenery-timber); }
+.scenery-leaves { fill: var(--scenery-leaf); }
+.scenery-leaves-light { fill: var(--scenery-leaf-light); }
+.scenery-awning { fill: var(--scenery-shop); }
+.scenery-hill { fill: #d7e2c9; }
+.level-won .world-scenery { --scenery-wall: #69768b; --scenery-roof: #8691a4; --scenery-glass: #e8c887; --scenery-timber: #82848b; --scenery-leaf: #6c877d; --scenery-leaf-light: #819f8c; --scenery-shop: #b38f9e; }
+.level-won .scenery-hill { fill: #536571; }
