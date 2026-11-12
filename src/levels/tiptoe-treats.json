@@ -1,0 +1,77 @@
+{
+  "id": "tiptoe-treats",
+  "title": "Tiptoe Treats",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1040,
+  "bars": [
+    [
+      "8",
+      "8",
+      "q",
+      "q",
+      "q"
+    ],
+    [
+      "8",
+      "8",
+      {
+        "duration": "q",
+        "rest": true
+      },
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "q",
+      "8",
+      "8",
+      "q"
+    ],
+    [
+      "q",
+      {
+        "duration": "q",
+        "rest": true
+      },
+      "8",
+      "8",
+      "q"
+    ],
+    [
+      "8",
+      "8",
+      "q",
+      "q",
+      "q"
+    ],
+    [
+      "8",
+      "8",
+      {
+        "duration": "q",
+        "rest": true
+      },
+      "q",
+      "q"
+    ],
+    [
+      "q",
+      "q",
+      "8",
+      "8",
+      "q"
+    ],
+    [
+      "q",
+      {
+        "duration": "q",
+        "rest": true
+      },
+      "8",
+      "8",
+      "q"
+    ]
+  ]
+}

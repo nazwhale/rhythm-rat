@@ -181,3 +181,36 @@ for (const level of beginners) {
   }
 }
 console.log('Verified six distinct beginner levels with half notes, simple paired eighths and recovery bars before the original level 3.')
+
+// More practice around The First Lap and Pause for Cheese, before eighth rests.
+const lapPracticeIds = ['crumb-trail', 'pantry-patrol', 'whisker-shuffle', 'scamper-squares', 'cheddar-chase']
+const restPracticeIds = ['quiet-cupboard', 'peek-and-squeak', 'tail-end-treats', 'tiptoe-treats', 'snack-and-snooze']
+const practice = [...lapPracticeIds, ...restPracticeIds].map((id) => {
+  const level = levels.find((item) => item.id === id)
+  assert.ok(level, `Missing practice level: ${id}`)
+  return level
+})
+assert.deepEqual([...practice].sort((a, b) => a.rating - b.rating).map((level) => level.id), [...lapPracticeIds, ...restPracticeIds])
+assert.equal(new Set(levels.map((level) => JSON.stringify(level.bars))).size, levels.length, 'Every level should have a distinct rhythm sequence')
+for (const level of practice) {
+  const events = createEvents(level)
+  assert.ok(events.every((note) => ['q', '8'].includes(note.duration) && !note.tie && !note.dotted))
+  assert.ok(events.some((note) => note.duration === '8'))
+  assert.ok(createOnsets(level).length <= createOnsets(mixed).length, 'Keep attack density at or below The First Lap')
+  assert.ok(new Set(level.bars.map(signature)).size <= 5, 'Repeat familiar bar patterns')
+  for (const bar of level.bars) {
+    const notes = bar.map((token) => typeof token === 'string' ? { duration: token } : token)
+    assert.ok(notes.filter((note) => note.rest).length <= 1, 'At most one rest per bar')
+    assert.ok(notes.filter((note) => note.duration === '8').length <= 4, 'At most two eighth-note pairs per bar')
+  }
+  if (lapPracticeIds.includes(level.id)) {
+    assert.ok(level.rating > mixed.rating && level.rating < bridge[0].rating)
+    assert.ok(events.every((note) => !note.rest), 'Save rests for the Pause for Cheese group')
+  } else {
+    assert.ok(level.rating > bridge[0].rating && level.rating < bridge[1].rating)
+    const rests = events.filter((note) => note.rest)
+    assert.equal(rests.length, 4, 'Four rest bars balanced with four recovery bars')
+    assert.ok(rests.every((note) => note.duration === 'q' && Number.isInteger(note.beat)), 'Only on-beat quarter rests')
+  }
+}
+console.log('Verified ten distinct practice levels around The First Lap and Pause for Cheese, with repeated paired-eighth patterns and quarter-rest recovery bars.')
