@@ -393,7 +393,7 @@ export default function App() {
             </span>
           })}
         </div>
-        <WorldScenery seed={scenerySeed} elapsed={elapsed} running={phase === 'playing' || phase === 'countin'} />
+        <WorldScenery levelIndex={challenge.levelIndex} levelCount={LEVELS.length} seed={scenerySeed} elapsed={elapsed} running={phase === 'playing' || phase === 'countin'} />
         {notice && <div key={notice + challenge.attempt + challenge.levelIndex} className="run-notice" onAnimationEnd={() => setNotice('')}>{notice}</div>}
         {phase === 'ready' && <div className="ready-cue"><kbd className="keycap"><span className="desktop-hint">SPACE</span><span className="touch-hint">TAP</span></kbd><span>to start</span></div>}
       <div className="level-progress-row">
