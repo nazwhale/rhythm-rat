@@ -70,7 +70,7 @@ export function levelSeconds(level: Level) { return level.bars.length * level.be
 export const ATTEMPTS_PER_LEVEL = 2
 export const SCROLL_PIXELS_PER_SECOND = 200
 export function nextChallenge(current: { levelIndex: number; attempt: number }, passed: boolean, levelCount: number) {
-  return passed || current.attempt >= ATTEMPTS_PER_LEVEL
-    ? { levelIndex: (current.levelIndex + 1) % levelCount, attempt: 1 }
-    : { ...current, attempt: current.attempt + 1 }
+  if (passed) return { levelIndex: (current.levelIndex + 1) % levelCount, attempt: 1 }
+  if (current.attempt < ATTEMPTS_PER_LEVEL) return { ...current, attempt: current.attempt + 1 }
+  return { levelIndex: Math.max(0, current.levelIndex - 1), attempt: 1 }
 }

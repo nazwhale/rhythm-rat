@@ -1,0 +1,41 @@
+{
+  "id": "tiny-nibbles",
+  "title": "Tiny Nibbles",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 800,
+  "bars": [
+    [
+      "h",
+      "h"
+    ],
+    [
+      "h",
+      "h"
+    ],
+    [
+      "h",
+      "h"
+    ],
+    [
+      "h",
+      "h"
+    ],
+    [
+      "h",
+      "h"
+    ],
+    [
+      "h",
+      "h"
+    ],
+    [
+      "h",
+      "h"
+    ],
+    [
+      "h",
+      "h"
+    ]
+  ]
+}

@@ -151,7 +151,7 @@ export default function App() {
     const complete = result.miss === 0 && result.extra === 0 && result.perfect + result.good === onsets.length
     if (!complete) {
       const next = nextChallenge(challenge, false, LEVELS.length)
-      prepare(next, next.levelIndex === challenge.levelIndex ? 'Second bite' : `Next up · ${LEVELS[next.levelIndex].title}`)
+      prepare(next, next.attempt > 1 ? 'Second bite' : `Try again · ${LEVELS[next.levelIndex].title}`)
       return
     }
     synthRef.current?.continueMusic()
@@ -329,7 +329,10 @@ export default function App() {
 
     <div className="admin-toolbar">
       <label htmlFor="admin-level">LEVEL PICKER</label>
-      <select id="admin-level" value={challenge.levelIndex} onChange={(event) => selectLevel(Number(event.target.value))}>
+      <select id="admin-level" value={challenge.levelIndex} onChange={(event) => {
+        selectLevel(Number(event.target.value))
+        event.currentTarget.blur()
+      }}>
         {LEVELS.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
       </select>
     </div>

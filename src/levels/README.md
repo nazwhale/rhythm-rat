@@ -1,6 +1,6 @@
 # Rhythm Rat levels
 
-Each JSON file is discovered automatically. Levels currently run in ascending order of their provisional rating, starting with Steady Bites. Passing ends in the mouse hole; continue to the next level with Space, a tap or Next Level. The first failure immediately reloads the same level with a fading “Second bite” notice. The second failure immediately loads the next level. From either ready scene, Space or a tap starts the one-bar count-in. After the final level, the sequence loops. Attempts are per encounter and reset on a new level or page reload.
+Each JSON file is discovered automatically. Levels currently run in ascending order of their provisional rating, starting with Tiny Nibbles. Passing ends in the mouse hole; continue to the next level with Space, a tap or Next Level. The first failure immediately reloads the same level with a fading “Second bite” notice. The second failure immediately loads the previous, easier level (or stays on Tiny Nibbles if already at the easiest level). Only a win advances to a harder level. From either ready scene, Space or a tap starts the one-bar count-in. After winning the final level, the sequence loops. Attempts are per encounter and reset on a new level or page reload.
 
 ```json
 {
@@ -53,20 +53,26 @@ Run `npm test` to check bar totals, source rhythm coverage, rest/tie scheduling,
 
 ## Learning progression
 
-All levels stay at 110 BPM and eight bars. The four stepping-stone ratings sit between The First Lap and Rest & Relish; ratings remain provisional rather than measured difficulty.
+All levels stay at 110 BPM and eight bars. Six beginner additions precede The First Lap, starting with half notes before building toward Steady Bites, all easier than the original level 3, Pause for Cheese. They use no rests or holds, at most one quaver pair per bar, and at least four bars without quavers. The four stepping-stone ratings sit between The First Lap and Rest & Relish; ratings remain provisional rather than measured difficulty.
 
 | Order | Level | Introduces |
 | --- | --- | --- |
-| 1 | Steady Bites | Crotchets |
-| 2 | The First Lap | Paired quavers |
-| 3 | Pause for Cheese | Quarter-note rests in repeated familiar patterns |
-| 4 | Offbeat Nibbles | Eighth-note rests and off-beat entries, without holds |
-| 5 | A Little Stretch | Exactly one quarter-to-quarter hold in bar four, surrounded by familiar bars |
-| 6 | Across the Cracks | Three holds: one short, one across a bar line, and one familiar longer hold |
-| 7 | Rest & Relish | Mixed rests, syncopation, frequent ties and dotted crotchets |
-| 8 | Midnight Munch | Denser combinations, repeated cross-bar ties and a final minim |
+| 1 | Tiny Nibbles | Two minims per bar: two evenly spaced taps |
+| 2 | Little Paws | Minims followed by two crotchets, alternating with minim-only bars |
+| 3 | Cheese at Dusk | Two crotchets followed by a minim, alternating with minim-only bars |
+| 4 | Double Helping | Alternating minim-only and crotchet-only bars |
+| 5 | Middle Munch | Familiar minim and crotchet combinations |
+| 6 | Steady Bites | Crotchets |
+| 7 | Around the Block | One quaver pair in alternating bars, with minims and recovery bars |
+| 8 | The First Lap | Multiple quaver pairs per bar |
+| 9 | Pause for Cheese | Quarter-note rests in repeated familiar patterns |
+| 10 | Offbeat Nibbles | Eighth-note rests and off-beat entries, without holds |
+| 11 | A Little Stretch | Exactly one quarter-to-quarter hold in bar four, surrounded by familiar bars |
+| 12 | Across the Cracks | Three holds: one short, one across a bar line, and one familiar longer hold |
+| 13 | Rest & Relish | Mixed rests, syncopation, frequent ties and dotted crotchets |
+| 14 | Midnight Munch | Denser combinations, repeated cross-bar ties and a final minim |
 
-The stepping stones deliberately repeat patterns and include recovery bars. Dotted durations and minims remain in the last two levels. Adding the JSON files automatically includes them in the public level picker and normal progression.
+The stepping stones deliberately repeat patterns and include recovery bars. Dotted durations remain in the last two levels; beginner minims are untied taps with a two-beat gap before the next note. Adding the JSON files automatically includes them in the public level picker and normal progression.
 
 
 ## Play feedback and sound
