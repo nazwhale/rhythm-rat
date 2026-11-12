@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <title>Rhythm Rat</title>
+  <path fill="#283b32" d="M4 0h24v2h2v2h2v24h-2v2h-2v2H4v-2H2v-2H0V4h2V2h2z"/>
+  <path fill="#d79391" d="M3 17h3v4h5v3H6v-1H3z"/>
+  <path fill="#9da2a4" d="M9 16h3v-3h7V7h6v6h2v3h3v6h-5v3H12v-3H9z"/>
+  <path fill="#dca5a0" d="M20 9h3v4h-3z"/>
+  <path fill="#283b32" d="M24 16h3v3h-3z"/>
+</svg>

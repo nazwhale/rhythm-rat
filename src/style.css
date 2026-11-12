@@ -105,7 +105,7 @@
 @media(max-width:560px){.runner-lane .level-progress-row{left:12px;right:12px;top:12px}.start-overlay{bottom:72px}.countin-overlay{top:104px}}
 
 /* Experimental cheese noteheads: keep the engraved stems, beams and ties. */
-.cheese-notation{bottom:-2px;opacity:.85}
+.cheese-notation{bottom:-2px;opacity:1}
 .cheese-head{position:absolute;bottom:17px;width:18px;height:14px;transform:translateX(-50%);z-index:2}
 .cheese-head .cheese-piece{width:18px;height:14px}
 .cheese-head.perfect,.cheese-head.good,.cheese-head.being-eaten{visibility:hidden}
@@ -172,3 +172,196 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
 @media(max-width:560px){.topbar{flex-wrap:wrap;height:auto;min-height:88px;padding:12px 0;gap:9px}.brand{font-size:11px}.level-name{order:3;width:100%;font-size:8px}.sound-controls{margin-left:auto;gap:5px}.sound-controls select{font-size:10px;max-width:110px;padding:7px 5px}.intro-row{padding:22px 3px}.intro-row h1{font-size:34px}.howto{margin-top:12px}.runner-lane{height:260px}.ready-cue{left:26%;font-size:11px}.run-notice{left:50%;font-size:18px}.countin-overlay{left:calc(26% - 45px);top:110px}.note-feedback{font-size:12px}.input-cue{font-size:10px}.cheese-board{margin-bottom:20px}}
 @media(prefers-reduced-motion:reduce){.party-guests,.party-disco,.party-lights,.party-confetti{animation:none!important}}
 .run-notice{left:50%}
+
+.ready-cue{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.ready-cue .keycap{display:inline-block;padding:9px 11px;font-size:10px}
+@media(max-width:560px){.topbar{min-height:64px}.ready-cue{gap:7px}.ready-cue .keycap{font-size:10px;padding:9px 11px}}
+
+.brand-mark{width:32px;height:32px;display:block;border-radius:0;background:transparent;image-rendering:pixelated;flex-shrink:0}
+
+/* A low-contrast streetscape stays behind the rhythm and never receives input. */
+.world-scenery{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.scenery-layer{position:absolute;left:0;display:flex;width:3840px;will-change:transform}
+.scenery-tile{width:960px;flex:0 0 960px;height:100%}
+.scenery-tile>svg{display:block;width:100%;height:100%}
+.scenery-skyline{bottom:39px;height:160px;color:#dfe7d9;opacity:.30}
+.scenery-street{bottom:39px;height:150px;color:#b9c7ae;opacity:.32}
+.streetlamp-light{fill:#e7cc85;animation:streetlamp-flicker 13s linear infinite;animation-play-state:paused}
+.streetlamp-halo{opacity:.12}
+.lamp-1{animation-duration:19s;animation-delay:-7s}
+.is-running .streetlamp-light{animation-play-state:running}
+.scenery-cat{color:#85947e;opacity:.72}
+.ready-cue{z-index:1}
+@keyframes streetlamp-flicker{0%,40%,42%,44%,100%{opacity:.85}40.5%,43%{opacity:.48}41%,43.5%{opacity:.7}}
+@media(max-width:560px){.scenery-skyline,.scenery-street{bottom:32px}.scenery-skyline{height:140px}}
+@media(prefers-reduced-motion:reduce){.world-scenery .scenery-layer{transform:none!important;will-change:auto}.streetlamp-light{animation:none;opacity:.85}}
+
+/* Give the playable cheese a little more definition against the quiet street. */
+.cheese-head .cheese-piece{filter:saturate(1.12) contrast(1.08) drop-shadow(0 1px 0 #77603b26)}
+
+/* Each tap gets a complete, compact chomp; variants never alter note timing. */
+.rat{--chomp-reach:3px;--chomp-tilt:-3deg;--crumb-spread:1;pointer-events:none}
+.rat.bite-variant-1{--chomp-reach:4px;--chomp-tilt:2deg;--crumb-spread:1.2}
+.rat.bite-variant-2{--chomp-reach:2px;--chomp-tilt:-5deg;--crumb-spread:.85}
+.rat.eating{animation:rat-chomp .26s ease-out both;transform-origin:75% 85%}
+.rat-mouth,.rat-tooth{opacity:0;transform-box:fill-box;transform-origin:top}
+.eating .rat-mouth,.eating .rat-tooth{animation:mouth-open .26s steps(2,end) both}
+.eating .rat-jaw{animation:jaw-chomp .26s ease-out both}
+.bite-morsel{position:absolute;left:57px;top:23px;width:18px;height:14px;transform-origin:left center;animation:morsel-chomp .26s ease-out both}
+.rat .bite-morsel svg{width:18px;height:14px}
+.cheese-crumbs{right:1px;top:28px}
+.cheese-crumbs i{animation:chomp-crumb .20s ease-out both;animation-delay:55ms;opacity:0}
+.cheese-crumbs i:nth-child(4){--crumb-x:17px;--crumb-y:-7px;width:3px;height:3px;background:#ffe8a3}
+.cheese-crumbs i:nth-child(5){--crumb-x:-9px;--crumb-y:-17px;width:2px;height:2px;background:#d59a32}
+.rat.holding{animation:rat-chomp .16s ease-out infinite}
+.rat.holding .rat-mouth,.rat.holding .rat-tooth{animation:mouth-open .16s steps(2,end) infinite}
+.rat.holding .rat-jaw{animation:jaw-chomp .16s ease-out infinite}
+.rat.holding .bite-morsel{animation:morsel-chomp .16s ease-out infinite}
+@keyframes rat-chomp{0%{transform:translateX(0)}20%{transform:translateX(1px) rotate(var(--chomp-tilt)) scale(.98,1.04)}42%{transform:translateX(var(--chomp-reach)) scale(1.06,.93)}72%{transform:translateX(1px) scale(.99,1.02)}100%{transform:none}}
+@keyframes mouth-open{0%,80%,100%{opacity:0;transform:scaleY(.2)}15%,32%{opacity:1;transform:scaleY(1.5)}46%,65%{opacity:1;transform:scaleY(.35)}}
+@keyframes jaw-chomp{0%,100%{transform:translateY(0)}20%{transform:translateY(3px)}43%{transform:translateY(-1px)}65%{transform:translateY(1px)}}
+@keyframes morsel-chomp{0%{opacity:1;transform:translateX(3px) scale(1)}24%{opacity:1;transform:translateX(0) scale(.9,1.12)}43%{opacity:1;transform:translateX(-3px) scale(1.15,.5)}72%,100%{opacity:0;transform:translateX(-9px) scale(.15,.3)}}
+@keyframes chomp-crumb{0%{opacity:0;transform:translate(0,0)}12%{opacity:1}100%{opacity:0;transform:translate(calc(var(--crumb-x,8px) * var(--crumb-spread)),var(--crumb-y,-12px)) rotate(110deg)}}
+@media(prefers-reduced-motion:reduce){.rat.eating,.rat.holding{animation:none}.eating .rat-mouth,.eating .rat-tooth{animation:none;opacity:1}.eating .rat-jaw{animation:none}.rat .bite-morsel{animation:none;opacity:0}.cheese-crumbs{display:none}}
+
+
+/* Bar markers share the notation clock; lamp posts sit exactly on boundaries. */
+.cheese-barline { bottom: 0; height: 150px; width: 56px; margin-left: -28px; background: none; color: #a6b799; }
+.bar-streetlamp { display: block; width: 56px; height: 150px; }
+.cheese-barline.upcoming { opacity: .6; }
+.cheese-barline.passed { opacity: .25; }
+
+.instrument-hud { position: absolute; top: 56px; left: 24px; display: flex; gap: 8px; z-index: 3; pointer-events: none; }
+.instrument-life { display: block; width: 28px; height: 32px; animation: instrument-collect 240ms steps(4, end) both; }
+.instrument-life svg { display: block; width: 100%; height: 100%; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@keyframes instrument-collect { from { opacity: 0; transform: translateY(-8px) scale(.75); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media(max-width:560px) { .instrument-hud { top: 52px; left: 12px; gap: 6px; } .instrument-life { width: 25px; height: 29px; } }
+@media(prefers-reduced-motion:reduce) { .instrument-life { animation: none; } }
+
+.rhythm-count { position: absolute; top: 12px; transform: translateX(-50%); color: #84947e; font: 10px 'DM Mono', monospace; line-height: 14px; pointer-events: none; }
+.rhythm-count-beat { color: #4e664b; font-weight: 700; }
+@media(max-width:560px) { .rhythm-count { top: 8px; } }
+
+/* Posts separate the count labels; their light turns on at the actual downbeat. */
+.cheese-barline .streetlamp-light { animation: none; opacity: 0; }
+.cheese-barline.is-lit .streetlamp-light { opacity: 1; }
+.cheese-barline.is-lit { color: #869b78; opacity: .65; }
+.cheese-barline.is-lit .streetlamp-halo { opacity: .25; }
+
+/* The dive leads the reveal; every run has its own dance floor. */
+.level-won .rat{animation:rat-disco-dive .85s ease-in forwards;transform-origin:80% 80%}
+@keyframes rat-disco-dive{0%{transform:none;opacity:1}35%{transform:translate(12px,-22px) rotate(-15deg)}75%{opacity:1}100%{transform:translate(64px,7px) rotate(24deg) scale(.2);opacity:0}}
+.party-interior{opacity:.12}
+.celebrating .party-interior{animation:disco-reveal .45s .8s both}
+.celebrating .party-rim{animation:disco-rim 1.8s 1s ease-in-out infinite alternate}
+.celebrating .party-ball{transform-box:fill-box;transform-origin:center;animation:disco-spin 1.5s .85s linear infinite}
+.celebrating .party-beams{transform-origin:48px 28px;animation:disco-sweep 2.3s .85s ease-in-out infinite alternate}
+.celebrating .party-dancer{animation:disco-dance var(--dance-speed) calc(.9s + var(--dance-delay)) ease-in-out infinite alternate;transform-box:fill-box;transform-origin:bottom}
+.party-caption{position:absolute;bottom:112px;left:44px;transform:translateX(-50%);white-space:nowrap;font:600 11px 'DM Mono',monospace;letter-spacing:.12em;color:#695479;animation:disco-caption .4s 1s both}
+.party-burst{position:absolute;left:44px;bottom:52px}
+.party-burst i{position:absolute;width:4px;height:7px;opacity:0;animation:disco-confetti 2.4s calc(1s + var(--delay)) ease-out both}
+.perfect-party .party-burst i{animation-iteration-count:3}
+.perfect-party .party-caption{color:#91701f}
+.party-crown{animation:disco-caption .5s 1.2s both}
+@keyframes disco-reveal{from{opacity:.12}to{opacity:1}}
+@keyframes disco-rim{from{filter:drop-shadow(0 0 3px var(--party-a))}to{filter:drop-shadow(0 0 10px var(--party-b))}}
+@keyframes disco-spin{0%{transform:scaleX(1)}50%{transform:scaleX(.4);filter:brightness(1.4)}100%{transform:scaleX(1)}}
+@keyframes disco-sweep{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}
+@keyframes disco-dance{from{transform:translateY(0) rotate(-9deg)}to{transform:translateY(-6px) rotate(9deg)}}
+@keyframes disco-caption{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+@keyframes disco-confetti{0%{opacity:0;transform:translate(0,0)}10%{opacity:1}50%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--turn))}100%{opacity:0;transform:translate(var(--x),45px) rotate(var(--turn))}}
+@media(prefers-reduced-motion:reduce){.level-won .rat{animation:none;opacity:0}.celebrating .party-interior{animation:none;opacity:1}.celebrating .party-rim,.celebrating .party-ball,.celebrating .party-beams,.celebrating .party-dancer,.party-caption,.party-crown{animation:none}.party-burst{display:none}}
+
+/* A single room unfolds from the original doorway, inside the same wall. */
+.disco-cutaway{position:absolute;bottom:0;left:0;width:min(680px,68vw);height:clamp(130px,20vw,210px);transform-origin:32px bottom;animation:club-unfold .85s .85s cubic-bezier(.2,.75,.25,1) both;filter:drop-shadow(0 0 12px #c7a4b855);overflow:hidden}
+.disco-cutaway>svg{width:100%;height:100%;display:block}
+.celebrating>svg{position:relative;z-index:1}
+.celebrating .party-caption{z-index:2}
+.club-mirror-ball{transform-box:fill-box;transform-origin:center;animation:disco-spin 1.7s linear infinite}
+.club-beams{transform-origin:290px 45px;animation:disco-sweep 3s ease-in-out infinite alternate}
+.club-guest{animation:club-bop .4s ease-in-out infinite alternate}
+.club-arriving-rat{animation:club-arrive .8s 1.6s both}
+.club-surprise{animation:disco-caption .5s 2s both}
+.surprise-arrival{animation:surprise-delivery 5s 2.1s both}
+.surprise-conga{animation:surprise-conga 1.2s ease-in-out infinite alternate}
+.surprise-spin{animation:surprise-spin 1.7s linear infinite}
+.surprise-snooze{animation:surprise-snooze 2s ease-in-out infinite}
+.surprise-slide{animation:surprise-slide 3s 2s ease-in-out infinite}
+.surprise-cat{animation:surprise-peek 6s 2s both}
+.surprise-curtain{transform-box:fill-box;transform-origin:right;animation:surprise-curtain 6s 2s both}
+.surprise-float{animation:surprise-float 2.5s ease-in-out infinite alternate}
+.surprise-band{animation:club-bop .3s ease-in-out infinite alternate}
+.surprise-spark{animation:surprise-snooze 1.3s ease-out infinite}
+.surprise-toast{animation:surprise-toast 1.6s ease-in-out infinite alternate}
+@keyframes club-unfold{from{opacity:0;clip-path:circle(34px at 32px 100%)}to{opacity:1;clip-path:circle(1100px at 32px 100%)}}
+@keyframes club-bop{to{transform:translateY(-7px) rotate(-4deg)}}
+@keyframes club-arrive{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}
+@keyframes surprise-delivery{from{transform:translateX(140px)}to{transform:translateX(0)}}
+@keyframes surprise-conga{to{transform:translate(12px,-6px)}}
+@keyframes surprise-spin{to{transform:rotate(360deg)}}
+@keyframes surprise-snooze{0%{opacity:0;translate:0 7px}40%{opacity:1}100%{opacity:0;translate:0 -12px}}
+@keyframes surprise-slide{0%,20%{translate:0 0}75%,100%{translate:102px 76px}}
+@keyframes surprise-peek{0%,15%{opacity:0}30%,100%{opacity:1}}
+@keyframes surprise-curtain{0%,10%{transform:scaleX(1)}30%,60%{transform:scaleX(.05)}75%,100%{transform:scaleX(1)}}
+@keyframes surprise-float{to{translate:0 -17px;rotate:3deg}}
+@keyframes surprise-toast{to{translate:0 -8px}}
+@media(max-width:560px){.disco-cutaway{width:70vw;height:125px}}
+@media(prefers-reduced-motion:reduce){.disco-cutaway,.disco-cutaway *{animation:none!important}.disco-cutaway{clip-path:none;opacity:1}.surprise-cat{opacity:0}.surprise-curtain{transform:scaleX(1)}}
+
+/* Each surprise occupies its own clipped stage so any pair can play together. */
+.surprise-limbo{transform-box:fill-box;transform-origin:bottom;animation:surprise-limbo 1.5s ease-in-out infinite alternate}
+.surprise-juggle{animation:surprise-juggle 1.2s ease-in-out infinite}
+.surprise-skate{animation:surprise-skate 2.8s ease-in-out infinite alternate}
+.surprise-bubble{animation:surprise-bubble 2.7s ease-out infinite}
+.surprise-flash{animation:surprise-flash 4s infinite;opacity:0}
+.surprise-hammock{transform-origin:75px 62px;animation:surprise-hammock 2s ease-in-out infinite alternate}
+.surprise-tap{animation:surprise-tap .25s steps(2,end) infinite alternate}
+.surprise-popcorn{animation:surprise-popcorn 1.4s ease-in-out infinite}
+.surprise-plane{animation:surprise-plane 3.5s ease-in-out infinite}
+.surprise-rave{transform-box:fill-box;transform-origin:bottom;animation:surprise-rave .5s ease-in-out infinite alternate;filter:drop-shadow(0 0 4px #c8f2ca88)}
+@keyframes surprise-limbo{from{transform:translateX(-18px) rotate(-25deg)}to{transform:translateX(18px) rotate(-40deg)}}
+@keyframes surprise-juggle{0%,100%{translate:0 10px;rotate:-20deg}50%{translate:0 -28px;rotate:25deg}}
+@keyframes surprise-skate{from{translate:-28px 0;rotate:-5deg}to{translate:28px 0;rotate:5deg}}
+@keyframes surprise-bubble{0%{translate:0 20px;opacity:0}20%,70%{opacity:.9}100%{translate:12px -40px;opacity:0}}
+@keyframes surprise-flash{0%,72%,80%,100%{opacity:0}75%,77%{opacity:.85}}
+@keyframes surprise-hammock{from{rotate:-7deg}to{rotate:7deg}}
+@keyframes surprise-tap{to{translate:0 -6px;rotate:4deg}}
+@keyframes surprise-popcorn{0%,100%{translate:0 0}50%{translate:0 -32px;rotate:12deg}}
+@keyframes surprise-plane{0%{translate:-65px 30px;opacity:0}20%,75%{opacity:1}100%{translate:75px -32px;opacity:0}}
+@keyframes surprise-rave{from{rotate:-12deg}to{rotate:12deg}}
+
+/* Night falls with the disco reveal; the room and HUD stay above the sky. */
+.runner-lane::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 55% 75%, #343047 0%, #191e30 65%, #141a29 100%);
+  opacity: 0; transition: opacity 1.2s ease;
+}
+.runner-lane.level-won::before { opacity: 1; transition-delay: .65s; }
+.runner-lane .scenery-layer,
+.runner-lane .ground-line,
+.runner-lane .rhythm-count,
+.runner-lane .cheese-bar-label { transition: color 1.2s ease, background-color 1.2s ease, opacity 1.2s ease; }
+.level-won .scenery-skyline { color: #66728b; opacity: .3; }
+.level-won .scenery-street { color: #91a4a5; opacity: .35; }
+.level-won .ground-line { background: #718879; }
+.level-won .lane-topline { background: #30394d; }
+.level-won .rhythm-count { color: #b7c4bb; }
+.level-won .rhythm-count-beat { color: #f2e7c7; }
+.level-won .cheese-bar-label,
+.level-won .run-notice { color: #e0dfca; }
+.level-won .party-caption { color: #ecdaf9; }
+.level-won .perfect-party .party-caption { color: #ffe49a; }
+.level-won .level-progress-track { filter: drop-shadow(0 0 3px #b6d39555); }
+.level-won .instrument-life { filter: drop-shadow(0 1px 2px #090d19); }
+@media(prefers-reduced-motion:reduce) {
+  .runner-lane::before,
+  .runner-lane .scenery-layer,
+  .runner-lane .ground-line,
+  .runner-lane .rhythm-count,
+  .runner-lane .cheese-bar-label { transition: none; }
+}
+
+.bpm .time-signature { font-size: 15px; padding-right: 10px; margin-right: 3px; }
+.lamp-bar-number { font: 700 10px 'DM Mono', monospace; fill: #34432f; letter-spacing: 0; }
+@media(max-width:560px) { .bpm .time-signature { font-size: 12px; padding-right: 7px; margin-right: 0; } }
