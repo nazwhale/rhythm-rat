@@ -11,6 +11,8 @@ import { GROOVE_LAYERS, unlockedLayerCount } from './groove'
 import { RhythmNotation, type Judgement } from './RhythmNotation'
 import { ATTEMPTS_PER_LEVEL, createEvents, createOnsets, levelSeconds, nextChallenge, SCROLL_PIXELS_PER_SECOND, type Onset, type Duration } from './level'
 import { LEVELS } from './levels'
+import RatingLab from './ratings/RatingLab'
+import { useLocalRatings } from './ratings/useLocalRatings'
 import { HIT_WINDOW_SECONDS, judgeTap, judgeRelease, type TapJudgement } from './timing'
 
 type Phase = 'ready' | 'countin' | 'playing' | 'finished' | 'lost'
@@ -84,6 +86,8 @@ function InstrumentIcon({ id }: { id: MusicIcon }) {
 }
 
 export default function App() {
+  const lab = useLocalRatings(LEVELS)
+  const [rated, setRated] = useState(false)
   const [challenge, setChallenge] = useState({ levelIndex: 0, attempt: 1 })
   const level = LEVELS[challenge.levelIndex]
   const onsets = useMemo(() => createOnsets(level), [level])
@@ -177,8 +181,10 @@ export default function App() {
   const finish = useCallback(() => {
     const result = countsRef.current
     const complete = result.miss === 0 && result.extra === 0 && result.perfect + result.good === onsets.length
+    if (rated) lab.finish(complete, { ...result })
     if (!complete) {
       const next = nextChallenge(challenge, false, LEVELS.length)
+      if (rated && next.attempt === 1) next.levelIndex = lab.recommend(level)
       prepare(next, next.attempt > 1 ? 'Second bite' : '')
       if (next.attempt === 1) setPhase('lost')
       return
@@ -188,12 +194,13 @@ export default function App() {
     activeHold.current = null; setHoldingIndex(null); setEating(false)
     window.clearTimeout(biteTimer.current)
     if (animFrame.current) cancelAnimationFrame(animFrame.current)
-  }, [challenge, onsets.length, prepare, totalSeconds])
+  }, [challenge, onsets.length, prepare, totalSeconds, rated, lab.finish, lab.recommend, level])
 
   const begin = useCallback(async () => {
     const generation = ++runGeneration.current
     await Tone.start()
     if (generation !== runGeneration.current) return
+    if (rated && !lab.start(level, challenge.attempt, (countInSeconds + .12) * 1000)) return
     Tone.Transport.stop()
     Tone.Transport.cancel()
     Tone.Transport.position = 0
@@ -223,7 +230,7 @@ export default function App() {
     for (let i = 0; i < level.bars.length * level.beatsPerBar; i++) {
       synth.triggerAttackRelease(i % level.beatsPerBar === 0 ? 'C6' : 'G5', '32n', gameStart.current + i * beat, 0.2)
     }
-  }, [muted, sound, level, countInSeconds, beatSeconds])
+  }, [muted, sound, level, countInSeconds, beatSeconds, rated, challenge.attempt, lab.start])
 
   useEffect(() => {
     if (phase !== 'countin' && phase !== 'playing') return
@@ -269,12 +276,12 @@ export default function App() {
   }, [phase, finish, setMark, showFeedback, updateCount, level, onsets, countInSeconds, beatSeconds, totalSeconds])
 
   const advance = useCallback(() => {
-    prepare(nextChallenge(challenge, true, LEVELS.length))
-  }, [challenge, prepare])
+    prepare(rated ? { levelIndex: lab.recommend(), attempt: 1 } : nextChallenge(challenge, true, LEVELS.length))
+  }, [challenge, prepare, rated, lab.recommend])
 
   const selectLevel = useCallback((levelIndex: number) => {
-    if (LEVELS[levelIndex]) prepare({ levelIndex, attempt: 1 })
-  }, [prepare])
+    if (LEVELS[levelIndex]) { lab.abandon(); setRated(false); prepare({ levelIndex, attempt: 1 }) }
+  }, [prepare, lab.abandon])
 
   const press = useCallback(() => {
     if (phase === 'lost') return
@@ -323,12 +330,12 @@ export default function App() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.code !== 'Space' || event.repeat) return
-      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button')) return
+      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button, summary, a')) return
       event.preventDefault(); press()
     }
     const onRelease = (event: KeyboardEvent) => {
       if (event.code !== 'Space') return
-      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button')) return
+      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button, summary, a')) return
       event.preventDefault(); release()
     }
     const onBlur = () => {
@@ -343,6 +350,18 @@ export default function App() {
       window.removeEventListener('blur', onBlur)
     }
   }, [press, release, updateCount, finish])
+
+  const chooseRatedChallenge = useCallback(() => {
+    lab.abandon(); setRated(true); prepare({ levelIndex: lab.recommend(), attempt: 1 })
+  }, [lab.abandon, lab.recommend, prepare])
+  const choosePractice = useCallback(() => {
+    lab.abandon(); setRated(false); prepare({ levelIndex: challenge.levelIndex, attempt: 1 })
+  }, [lab.abandon, challenge.levelIndex, prepare])
+  const resetExperiment = useCallback(() => {
+    if (window.confirm('Delete this browser’s rating experiment and all its results? Export first if you want to keep them.')) {
+      if (lab.reset()) { setRated(false); prepare({ levelIndex: 0, attempt: 1 }) }
+    }
+  }, [lab.reset, prepare])
 
   const levelProgress = Math.max(0, Math.min(1, elapsed / totalSeconds))
 
@@ -366,6 +385,10 @@ export default function App() {
         {LEVELS.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
       </select>
     </div>
+
+    <RatingLab db={lab.db} error={lab.error} ready={lab.ready} canReset={lab.canReset} levels={LEVELS} rated={rated} busy={phase === 'countin' || phase === 'playing'}
+      onChallenge={chooseRatedChallenge} onPractice={choosePractice}
+      onRename={lab.rename} onExport={lab.exportData} onReset={resetExperiment} />
 
     <section className="intro-row">
       <div><h1>Eat to the beat.</h1></div>
@@ -462,7 +485,7 @@ export default function App() {
       </div>
 
       <div className="play-footer">
-        <span className="attempt-indicator">BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
+        <span className="attempt-indicator">{rated ? challenge.attempt === 1 ? 'RATED' : 'UNRATED RETRY' : 'PRACTICE'} · BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
         {phase === 'ready' ? <button className="start-button" onClick={() => void begin()}>LET’S EAT <span>→</span></button> : phase === 'countin' ? <span className="input-cue">Listen…</span> : phase === 'playing' ? <span className="input-cue"><span className="desktop-hint">Space to eat{hasHolds ? ' · hold for ties' : ''}</span><span className="touch-hint">Tap to eat{hasHolds ? ' · hold for ties' : ''}</span></span> : phase === 'lost' ? <span className="input-cue">The cheese can wait.</span> : <button className="start-button" onClick={advance}>NEXT LEVEL <span>→</span></button>}
       </div>
 

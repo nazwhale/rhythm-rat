@@ -45,9 +45,9 @@ Dots beside notes indicate dotted durations; the small articulation dots above n
 
 ## Future ratings
 
-`rating` is a provisional seed, not a live Elo score. The ids let future stored results reference a level independently of its title or file name. No player rating, matchmaking or rating changes are implemented yet.
+`rating` is an authored difficulty seed, not a shared live rating. Stable ids let results reference a level independently of its title or file name. The optional Rating experiment now learns separate player and level Glicko-2 ratings in each browser; these do not reorder the campaign or change the JSON seeds. See [the local rating guide](../../docs/local-rating-lab.md).
 
-For future matchmaking, select levels within 100 points of the player's rating. Define the difference as **player rating minus level rating**: positive means the player is favoured; negative means the level is favoured. Record the first-attempt result and second-attempt result separately so retries do not count as independent first encounters. Decide how second-bite wins affect ratings before implementing updates. Shared level ratings will need a backend that aggregates outcomes across players.
+The experiment selects challenges near a predicted 70% pass chance, avoids recent encounters where possible, and updates both ratings from the first attempt only. Second-bite outcomes are saved separately as practice. Repeats are allowed for local testing. Shared level ratings and authoritative outcomes will need a backend that aggregates results from independent users; one browser's difficulty estimates should not be treated as globally calibrated.
 
 Run `npm test` to check bar totals, source rhythm coverage, rest/tie scheduling, input/release windows and two-attempt progression. Run `npm run build` for the TypeScript and production build checks.
 

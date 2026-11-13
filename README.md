@@ -78,3 +78,7 @@ Failed attempts and manual level selection stop the old audio. The continuation
 clock is independent of rendering, skips stale steps after pauses, and is
 cleaned up with its audio engine. Background-tab timer throttling can still
 interrupt playback. `npm test` covers styles and continuous clock behavior.
+
+## Local rating experiment
+
+Open **Rating experiment** to try first-attempt Glicko-2 ratings saved in your browser. Choose **Find my next challenge**, then start the run normally. Export and reset controls are included; each browser learns independently. See [the experiment guide](docs/local-rating-lab.md) for rating policy, stored schema, testing questions and the later Workers/D1 path.

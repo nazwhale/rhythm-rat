@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types scripts/verify-levels.mjs && node --experimental-strip-types scripts/verify-groove.mjs && node --experimental-strip-types scripts/verify-styles.mjs && node --experimental-strip-types scripts/verify-scenery.mjs"
+    "test": "node --experimental-strip-types scripts/verify-levels.mjs && node --experimental-strip-types scripts/verify-groove.mjs && node --experimental-strip-types scripts/verify-styles.mjs && node --experimental-strip-types scripts/verify-scenery.mjs && node --experimental-strip-types scripts/verify-ratings.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
