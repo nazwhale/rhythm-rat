@@ -51,7 +51,8 @@ assert.deepEqual(nextChallenge({ levelIndex: 0, attempt: 2 }, false, 1), initial
 assert.deepEqual(nextChallenge(initial, true, 1), initial)
 console.log(`Verified ${levels.length} level files, onset timing, validation and two-attempt progression.`)
 
-// Off-beat and repeated presses must fail, including after the final note.
+// The raw judge rejects invalid presses. The game bypasses it after a secured win
+// so eager next-level taps cannot undo a completed run.
 assert.equal(judgeTap(0.25, 0.55, false), 'extra')
 assert.equal(judgeTap(0.8, 0.55, false), 'extra')
 assert.equal(judgeTap(0.01, 0.55, false), 'extra')
@@ -61,7 +62,7 @@ assert.equal(judgeTap(0.09, 0, false), 'late')
 assert.equal(judgeTap(-0.09, 0, true), 'early')
 assert.equal(judgeTap(-1, 0, true), 'ignore')
 assert.equal(judgeTap(0.121, 0, false), 'extra')
-console.log('Verified off-beat, duplicate and post-final taps, hit tolerance and count-in protection.')
+console.log('Verified raw off-beat and duplicate taps, hit tolerance and count-in protection.')
 
 assert.ok(levels.length >= 4)
 for (const id of ['rest-and-relish', 'midnight-munch']) {

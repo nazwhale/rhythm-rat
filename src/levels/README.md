@@ -99,3 +99,12 @@ Bite sounds can be switched live between Soft nom, Crunch, Musical, and No bite 
 Each level gets its own rural-to-urban scenery profile. Density, building height, greenery, landmarks and starting offsets change with progress through the difficulty-sorted list. The distant skyline develops sooner than the nearby street: a town may still have rural gardens in front, and the city can appear on the horizon before the rat reaches urban streets. Mixed cottages, shops and towers soften transitions; farms, windmills, benches, clock towers, antennas and water tanks add variation between levels.
 
 The skyline and street have separate palettes, starting offsets and parallax speeds. Two distinct tiles repeat seamlessly in each layer. Layout randomness stays fixed during a run and refreshes between attempts, while the level profile remains stable. Both layers use low opacity to keep notes readable, respect reduced motion and adopt a night palette for disco celebrations. Moving to an easier level restores its earlier scenery.
+
+
+## Count-in and touch input
+
+The count-in shows only the written note/rest types used in the selected level, including dotted notes and ties. The rat emerges from a left-hand hole and reaches its bite position using the same audio clock. Reduced-motion preferences keep the rat in place.
+
+Use the dedicated tap pad beneath the lane or Space to eat, keeping fingers away from notes. Holds stay captured if a finger slides off the pad; cancellation or loss of focus still fails an unfinished hold. Once every tap and required release succeeds, the win is secured immediately (including its local rating), and extra presses are ignored until the rat reaches the finish hole. The remaining bar and disco animation still play; a tap on Next level then advances normally.
+
+The silent-mode reminder explains how to hear the beat and remembers OK in this browser when storage is available. It does not try to detect the phone’s hardware silent switch.
