@@ -9,7 +9,7 @@ import { createRunAudio, type BiteSound } from './audio'
 import { type MusicIcon, type MusicInstruments } from './musicInstruments'
 import { GROOVE_LAYERS, unlockedLayerCount } from './groove'
 import { RhythmNotation, type Judgement } from './RhythmNotation'
-import { ATTEMPTS_PER_LEVEL, createEvents, createOnsets, levelSeconds, nextChallenge, SCROLL_PIXELS_PER_SECOND, type Onset, type Duration } from './level'
+import { ATTEMPTS_PER_LEVEL, createEvents, createOnsets, levelSeconds, nextChallenge, noteSpec, SCROLL_PIXELS_PER_SECOND, type Onset, type Duration, type Level } from './level'
 import { LEVELS } from './levels'
 import RatingLab from './ratings/RatingLab'
 import { useLocalRatings } from './ratings/useLocalRatings'
@@ -22,6 +22,21 @@ import { HIT_WINDOW_SECONDS, judgeTap, judgeRelease, type TapJudgement } from '.
 
 type Counts = { perfect: number; good: number; miss: number; extra: number; longest: number }
 const EMPTY: Counts = { perfect: 0, good: 0, miss: 0, extra: 0, longest: 0 }
+const PLAY_MODE_KEY = 'rhythm-rat:play-mode:v1'
+type NoteTypeFilters = { crotchets: boolean; quavers: boolean; minims: boolean; rests: boolean; dotted: boolean; ties: boolean }
+const ALL_NOTE_TYPES: NoteTypeFilters = { crotchets: true, quavers: true, minims: true, rests: true, dotted: true, ties: true }
+
+function levelMatchesNoteTypes(level: Level, filters: NoteTypeFilters) {
+  return level.bars.flat().every((token) => {
+    const note = noteSpec(token)
+    return (filters.crotchets || note.duration !== 'q')
+      && (filters.quavers || note.duration !== '8')
+      && (filters.minims || note.duration !== 'h')
+      && (filters.rests || !note.rest)
+      && (filters.dotted || !note.dotted)
+      && (filters.ties || !note.tie)
+  })
+}
 
 function Rat({ eating, holding, stumble, pulse, bite }: { eating: boolean; holding: boolean; stumble: boolean; pulse: number; bite: { duration: Duration; variant: number } }) {
   return <div className={`rat bite-variant-${bite.variant} ${eating ? 'eating' : ''} ${holding ? 'holding' : ''} ${stumble ? 'stumble' : ''}`} key={pulse}>
@@ -91,8 +106,15 @@ function InstrumentIcon({ id }: { id: MusicIcon }) {
 
 export default function App() {
   const lab = useLocalRatings(LEVELS)
-  const [rated, setRated] = useState(false)
+  const [rated, setRated] = useState(() => {
+    try { return window.localStorage.getItem(PLAY_MODE_KEY) === 'rated' } catch { return false }
+  })
+  const restoreRatedChallenge = useRef(rated)
   const [challenge, setChallenge] = useState({ levelIndex: 0, attempt: 1 })
+  const [noteTypeFilters, setNoteTypeFilters] = useState(ALL_NOTE_TYPES)
+  const [noteTypeFilterMessage, setNoteTypeFilterMessage] = useState('')
+  const matchingLevels = useMemo(() => LEVELS.filter((candidate) => levelMatchesNoteTypes(candidate, noteTypeFilters)), [noteTypeFilters])
+  const eligibleLevels = matchingLevels
   const level = LEVELS[challenge.levelIndex]
   const onsets = useMemo(() => createOnsets(level), [level])
   const events = useMemo(() => createEvents(level), [level])
@@ -184,13 +206,25 @@ export default function App() {
     setEating(false); setStumble(false); setNotice(message)
   }, [])
 
+  useEffect(() => {
+    try { window.localStorage.setItem(PLAY_MODE_KEY, rated ? 'rated' : 'unrated') } catch { /* Keep this session's choice when storage is unavailable. */ }
+  }, [rated])
+
+  useEffect(() => {
+    if (!restoreRatedChallenge.current) return
+    restoreRatedChallenge.current = false
+    prepare({ levelIndex: lab.recommend(undefined, eligibleLevels), attempt: 1 })
+  }, [prepare, lab.recommend, eligibleLevels])
+
   const finish = useCallback(() => {
     const result = countsRef.current
     const complete = hasCompletedAllNotes(result, onsets.length, activeHold.current !== null)
     if (rated) lab.finish(complete, { ...result })
     if (!complete) {
-      const next = nextChallenge(challenge, false, LEVELS.length)
-      if (rated && next.attempt === 1) next.levelIndex = lab.recommend(level)
+      const poolIndex = Math.max(0, eligibleLevels.findIndex((candidate) => candidate.id === level.id))
+      const next = nextChallenge({ levelIndex: poolIndex, attempt: challenge.attempt }, false, eligibleLevels.length)
+      if (rated && next.attempt === 1) next.levelIndex = lab.recommend(level, eligibleLevels)
+      else next.levelIndex = LEVELS.indexOf(eligibleLevels[next.levelIndex] ?? eligibleLevels[0])
       prepare(next, next.attempt > 1 ? 'Second bite' : '')
       if (next.attempt === 1) setPhase('lost')
       return
@@ -200,7 +234,7 @@ export default function App() {
     activeHold.current = null; setHoldingIndex(null); setEating(false)
     window.clearTimeout(biteTimer.current)
     if (animFrame.current) cancelAnimationFrame(animFrame.current)
-  }, [challenge, onsets.length, prepare, totalSeconds, rated, lab.finish, lab.recommend, level])
+  }, [challenge, onsets.length, prepare, totalSeconds, rated, lab.finish, lab.recommend, level, eligibleLevels])
 
   const secureCompletedRun = useCallback(() => {
     if (clearedRun.current || !hasCompletedAllNotes(countsRef.current, onsets.length, activeHold.current !== null)) return
@@ -292,12 +326,33 @@ export default function App() {
   }, [phase, finish, setMark, showFeedback, updateCount, level, onsets, countInSeconds, beatSeconds, totalSeconds])
 
   const advance = useCallback(() => {
-    prepare(rated ? { levelIndex: lab.recommend(), attempt: 1 } : nextChallenge(challenge, true, LEVELS.length))
-  }, [challenge, prepare, rated, lab.recommend])
+    const next = rated
+      ? { levelIndex: lab.recommend(undefined, eligibleLevels), attempt: 1 }
+      : (() => {
+        const poolIndex = eligibleLevels.findIndex((candidate) => candidate.id === level.id)
+        return { levelIndex: LEVELS.indexOf(eligibleLevels[(poolIndex + 1) % eligibleLevels.length]), attempt: 1 }
+      })()
+    prepare(next)
+  }, [prepare, rated, lab.recommend, eligibleLevels, level])
 
   const selectLevel = useCallback((levelIndex: number) => {
     if (LEVELS[levelIndex]) { lab.abandon(); setRated(false); prepare({ levelIndex, attempt: 1 }) }
   }, [prepare, lab.abandon])
+
+  const changePlayMode = useCallback((nextRated: boolean) => {
+    if (nextRated === rated) return
+    lab.abandon()
+    setRated(nextRated)
+    if (nextRated) {
+      prepare({ levelIndex: lab.recommend(undefined, eligibleLevels), attempt: 1 })
+    } else {
+      const currentAllowed = eligibleLevels.some((candidate) => candidate.id === level.id)
+      const nextLevelIndex = currentAllowed ? challenge.levelIndex : LEVELS.indexOf(eligibleLevels[0])
+      // Keep unrated play independent of an account or network, like the dinosaur game.
+      // Future rated submissions can add sign-up/login and a network requirement here.
+      prepare({ levelIndex: nextLevelIndex, attempt: 1 })
+    }
+  }, [rated, lab.abandon, lab.recommend, eligibleLevels, level, challenge.levelIndex, prepare])
 
   const press = useCallback(() => {
     if (phase === 'lost') return
@@ -373,17 +428,11 @@ export default function App() {
     }
   }, [press, release, cancelActiveHold])
 
-  const chooseRatedChallenge = useCallback(() => {
-    lab.abandon(); setRated(true); prepare({ levelIndex: lab.recommend(), attempt: 1 })
-  }, [lab.abandon, lab.recommend, prepare])
-  const choosePractice = useCallback(() => {
-    lab.abandon(); setRated(false); prepare({ levelIndex: challenge.levelIndex, attempt: 1 })
-  }, [lab.abandon, challenge.levelIndex, prepare])
   const resetExperiment = useCallback(() => {
     if (window.confirm('Delete this browser’s rating experiment and all its results? Export first if you want to keep them.')) {
-      if (lab.reset()) { setRated(false); prepare({ levelIndex: 0, attempt: 1 }) }
+      if (lab.reset()) prepare({ levelIndex: rated ? lab.recommend(undefined, eligibleLevels) : 0, attempt: 1 })
     }
-  }, [lab.reset, prepare])
+  }, [lab.reset, prepare, rated, lab.recommend, eligibleLevels])
 
   const levelProgress = Math.max(0, Math.min(1, elapsed / totalSeconds))
 
@@ -400,19 +449,55 @@ export default function App() {
 
     <SilentModeReminder />
 
+    <fieldset className="play-mode-switch" disabled={phase === 'countin' || phase === 'playing'}>
+      <legend>PLAY MODE</legend>
+      <label><input type="radio" name="play-mode" checked={!rated} onChange={() => changePlayMode(false)} /> Unrated</label>
+      <label><input type="radio" name="play-mode" checked={rated} onChange={() => changePlayMode(true)} /> Rated</label>
+      {rated && <small>Challenges follow your local rating. Online sign-in and result submission can be added later.</small>}
+    </fieldset>
+
     <div className="admin-toolbar">
-      <label htmlFor="admin-level">LEVEL PICKER</label>
-      <select id="admin-level" value={challenge.levelIndex} onChange={(event) => {
-        selectLevel(Number(event.target.value))
-        event.currentTarget.blur()
-      }}>
-        {LEVELS.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
-      </select>
+      <div className="note-type-filters" role="group" aria-label="Filter levels by note types">
+        <span>INCLUDE NOTE TYPES</span>
+        {([
+          ['crotchets', 'Crotchets'], ['quavers', 'Quavers'], ['minims', 'Minims'], ['rests', 'Rests'], ['dotted', 'Dotted notes'], ['ties', 'Tied notes'],
+        ] as const).map(([key, label]) => <label key={key}>
+          <input type="checkbox" checked={noteTypeFilters[key]} disabled={phase === 'countin' || phase === 'playing'} onChange={() => {
+            const nextFilters = { ...noteTypeFilters, [key]: !noteTypeFilters[key] }
+            const matching = LEVELS.filter((candidate) => levelMatchesNoteTypes(candidate, nextFilters))
+            if (!matching.length) {
+              setNoteTypeFilterMessage('No levels match that combination. Keep at least one supported note type selected.')
+              return
+            }
+            setNoteTypeFilterMessage('')
+            setNoteTypeFilters(nextFilters)
+            if (!levelMatchesNoteTypes(level, nextFilters)) {
+              if (rated) {
+                lab.abandon()
+                prepare({ levelIndex: lab.recommend(undefined, matching), attempt: 1 })
+              } else {
+                const currentPoolIndex = eligibleLevels.findIndex((candidate) => candidate.id === level.id)
+                const nextLevel = matching[Math.min(Math.max(currentPoolIndex, 0), matching.length - 1)]
+                selectLevel(LEVELS.indexOf(nextLevel))
+              }
+            }
+          }} />{label}
+        </label>)}
+        <small>{noteTypeFilterMessage || `${matchingLevels.length} matching levels`}</small>
+      </div>
+      {!rated && <>
+        <label htmlFor="admin-level">LEVEL</label>
+        <select id="admin-level" value={challenge.levelIndex} onChange={(event) => {
+          selectLevel(Number(event.target.value))
+          event.currentTarget.blur()
+        }}>
+          {eligibleLevels.map((item) => <option key={item.id} value={LEVELS.indexOf(item)}>{LEVELS.indexOf(item) + 1}. {item.title}</option>)}
+        </select>
+      </>}
     </div>
 
-    <RatingLab db={lab.db} error={lab.error} ready={lab.ready} canReset={lab.canReset} levels={LEVELS} rated={rated} busy={phase === 'countin' || phase === 'playing'}
-      onChallenge={chooseRatedChallenge} onPractice={choosePractice}
-      onRename={lab.rename} onExport={lab.exportData} onReset={resetExperiment} />
+    {rated && <RatingLab db={lab.db} error={lab.error} ready={lab.ready} canReset={lab.canReset} levels={LEVELS} busy={phase === 'countin' || phase === 'playing'}
+      onRename={lab.rename} onExport={lab.exportData} onReset={resetExperiment} />}
 
     <section className="intro-row">
       <div><h1>Eat to the beat.</h1></div>
@@ -504,7 +589,7 @@ export default function App() {
       </div>
 
       <div className="play-footer">
-        <span className="attempt-indicator">{rated ? challenge.attempt === 1 ? 'RATED' : 'UNRATED RETRY' : 'PRACTICE'} · BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
+        <span className="attempt-indicator">{rated ? challenge.attempt === 1 ? 'RATED' : 'UNRATED RETRY' : 'UNRATED'} · BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
         <TapZone phase={phase} cleared={allNotesCleared} hasHolds={hasHolds} resetKey={`${challenge.levelIndex}:${challenge.attempt}`}
           onPress={press} onRelease={release} onCancel={cancelActiveHold} />
       </div>

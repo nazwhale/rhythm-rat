@@ -3,14 +3,14 @@ import type { Level } from '../level'
 import { expectedScore } from './glicko'
 import { levelRating, playerRating, type LabDB } from './store'
 
-export default memo(function RatingLab({ db, error, ready, canReset, levels, rated, busy, onChallenge, onPractice, onRename, onExport, onReset }: {
-  db: LabDB; error: string; ready: boolean; canReset: boolean; levels: Level[]; rated: boolean; busy: boolean
-  onChallenge: () => void; onPractice: () => void; onRename: (name: string) => void; onExport: () => void; onReset: () => void
+export default memo(function RatingLab({ db, error, ready, canReset, levels, busy, onRename, onExport, onReset }: {
+  db: LabDB; error: string; ready: boolean; canReset: boolean; levels: Level[]; busy: boolean
+  onRename: (name: string) => void; onExport: () => void; onReset: () => void
 }) {
   const player = playerRating(db)
   const recent = db.ratingEvents.slice(-8).reverse()
   return <details className="rating-lab">
-    <summary>Rating experiment <span>{Math.round(player.rating)}{player.rd > 110 ? '?' : ''} · {player.games} rated runs · {rated ? 'Rated challenge' : 'Practice'}</span></summary>
+    <summary>Rating experiment <span>{Math.round(player.rating)}{player.rd > 110 ? '?' : ''} · {player.games} rated runs</span></summary>
     <div className="rating-lab-body">
       <p>Saved in this browser only. Each browser has its own player and level ratings. Export results to compare what you learn.</p>
       <div className="rating-lab-stats">
@@ -21,17 +21,15 @@ export default memo(function RatingLab({ db, error, ready, canReset, levels, rat
       <label className="rating-lab-name">Player name <input maxLength={60} value={db.user.name} disabled={busy || !!error || !ready} onChange={(event) => onRename(event.target.value)} /></label>
       <p>First attempts affect your rating and the level’s difficulty. Second bite is practice. Repeats are allowed for this experiment; starting a new level or refreshing after gameplay begins counts as a loss. Campaign order and scenery stay fixed.</p>
       <div className="rating-lab-actions">
-        <button disabled={busy || !!error || !ready} onClick={(event) => { event.currentTarget.blur(); onChallenge(); event.currentTarget.closest('details')?.removeAttribute('open') }}>Find my next challenge</button>
-        <button disabled={busy} onClick={(event) => { event.currentTarget.blur(); onPractice(); event.currentTarget.closest('details')?.removeAttribute('open') }}>Normal practice</button>
         <button onClick={onExport}>Export results</button>
         <button disabled={busy || !canReset} onClick={onReset}>Reset experiment</button>
       </div>
-      {error && <p className="rating-lab-error" role="alert">{error} Normal practice is still available.</p>}
+      {error && <p className="rating-lab-error" role="alert">{error} Switch to Unrated mode to keep playing.</p>}
       <div className="rating-lab-result" aria-live="polite">{recent[0] ? (() => {
         const change = db.ratingChanges.find((entry) => entry.eventId === recent[0].id && entry.ratingId === player.id)!
         const delta = Math.round(change.after.rating - change.before.rating)
         return `Last rated run: ${recent[0].won ? 'won' : 'lost'} · ${delta >= 0 ? '+' : ''}${delta} rating. Second bite never changes this result.`
-      })() : 'Choose “Find my next challenge”, then start the run to try it.'}</div>
+      })() : 'Your next rated challenge is selected from your rating. Start the run to play it.'}</div>
       {recent.length > 0 && <div className="rating-lab-table"><table><caption>Recent rated runs</caption><thead><tr><th>Level</th><th>Result</th><th>Your rating</th></tr></thead><tbody>{recent.map((event) => {
         const encounter = db.encounters.find((entry) => entry.id === event.encounterId)!
         const version = db.levelVersions.find((entry) => entry.id === encounter.levelVersionId)!

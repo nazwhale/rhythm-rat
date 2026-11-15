@@ -78,7 +78,12 @@ export function useLocalRatings(levels: Level[]) {
     }
     encounter.current = undefined
   }, [commit])
-  const recommend = useCallback((easierThan?: Level) => recommendLevel(current.current, levels, easierThan), [levels])
+  const recommend = useCallback((easierThan?: Level, candidates: Level[] = levels) => {
+    if (!candidates.length) return 0
+    const ceiling = candidates.some((level) => level.id === easierThan?.id) ? easierThan : undefined
+    const selected = candidates[recommendLevel(current.current, candidates, ceiling)]
+    return Math.max(0, levels.findIndex((level) => level.id === selected.id))
+  }, [levels])
   const rename = useCallback((name: string) => { commit((value) => ({ ...value, user: { ...value.user, name: name.slice(0, 60) } })) }, [commit])
   const reset = useCallback(() => {
     if (!ownsLock.current) return false
