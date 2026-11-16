@@ -149,7 +149,7 @@ export default function App() {
     <section className="game-card">
       <div className="game-heading"><div className="game-heading-info"><div className="game-status"><span className="live-dot" /> {phase === 'lost' ? 'Caught!' : phase === 'finished' ? 'Complete' : phase === 'countin' ? 'Count in' : level.title}</div>
         <span className="attempt-indicator">{rated ? challenge.attempt === 1 ? 'RATED' : 'RATED · DRAW CHANCE' : 'UNRATED'} · BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
-        {lab.user && phase !== 'lost' && <OnlineRatings snapshot={lab.snapshot} error={lab.error} saveStatus={lab.saveStatus} delta={lab.delta} onRetry={() => void lab.retry()} />}
+        {lab.user && phase !== 'lost' && <OnlineRatings levelId={level.id} snapshot={lab.snapshot} error={lab.error} saveStatus={lab.saveStatus} delta={lab.delta} onRetry={() => void lab.retry()} />}
       </div><div className="bpm"><strong className="time-signature" aria-label="4/4 time">4/4</strong><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
 
       <div className={`runner-lane ${stumble ? 'lane-stumble' : ''} ${phase === 'finished' ? 'level-won' : ''}`}>
