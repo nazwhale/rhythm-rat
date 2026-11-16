@@ -1,0 +1,17 @@
+{
+  "id": "between-the-walls",
+  "title": "Between the Walls",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1525,
+  "bars": [
+    ["8", "8", "8", "8", "8", "8", "8", "8"],
+    ["8", {"duration": "8", "tie": true}, "8", "8", "8", "8", "8", "8"],
+    ["8", "8", "8", "8", {"duration": "8", "tie": true}, "8", "8", "8"],
+    ["8", "8", "8", "8", "8", "8", "8", {"duration": "8", "tie": true}],
+    ["8", "8", {"duration": "8", "tie": true}, "8", "8", "8", "8", "8"],
+    ["8", {"duration": "8", "tie": true}, "8", "8", "8", {"duration": "8", "tie": true}, "8", "8"],
+    ["8", "8", {"duration": "8", "tie": true}, "8", "8", "8", "8", {"duration": "8", "tie": true}],
+    ["8", "8", "8", "8", "8", "8", "8", "8"]
+  ]
+}

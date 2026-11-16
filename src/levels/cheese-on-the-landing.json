@@ -1,0 +1,17 @@
+{
+  "id": "cheese-on-the-landing",
+  "title": "Cheese on the Landing",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1325,
+  "bars": [
+    ["q", "q", "q", "q"],
+    ["q", "q", "8", "8", "8", "8"],
+    ["q", "q", "8", "8", "8", {"duration": "8", "tie": true}],
+    ["q", "q", "q", "q"],
+    ["q", "q", "q", "q"],
+    ["q", "q", "q", "q"],
+    ["q", "q", "8", "8", "8", {"duration": "8", "tie": true}],
+    ["q", "q", "q", "q"]
+  ]
+}

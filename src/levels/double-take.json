@@ -1,0 +1,17 @@
+{
+  "id": "double-take",
+  "title": "Double Take",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1400,
+  "bars": [
+    ["q", "q", "q", "q"],
+    ["q", "q", "q", {"duration": "8", "rest": true}, "8"],
+    ["q", "q", "q", "q"],
+    ["q", "q", "q", {"duration": "8", "rest": true}, {"duration": "8", "tie": true}],
+    ["q", "q", "q", "q"],
+    ["q", "q", "q", {"duration": "8", "rest": true}, "8"],
+    [{"duration": "q", "rest": true}, "q", "q", "q"],
+    ["q", "q", "q", "q"]
+  ]
+}

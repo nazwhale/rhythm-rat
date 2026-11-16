@@ -1,0 +1,17 @@
+{
+  "id": "lights-out",
+  "title": "Lights Out",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1300,
+  "bars": [
+    ["q", "8", "8", "q", {"duration": "q", "rest": true}],
+    [{"duration": "8", "rest": true}, "8", "q", "q", "q"],
+    ["q", "q", "q", "q"],
+    ["q", "q", "q", "q"],
+    ["q", "8", "8", "q", {"duration": "q", "rest": true}],
+    [{"duration": "8", "rest": true}, "8", "q", "q", "q"],
+    ["q", "q", "q", "q"],
+    ["q", "q", "q", "q"]
+  ]
+}

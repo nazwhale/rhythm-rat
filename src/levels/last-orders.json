@@ -1,0 +1,17 @@
+{
+  "id": "last-orders",
+  "title": "Last Orders",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1575,
+  "bars": [
+    [{"duration": "q", "dotted": true}, "8", "q", "q"],
+    ["q", {"duration": "8", "rest": true}, "8", "q", "q"],
+    ["q", "q", "8", "8", "8", "8"],
+    ["q", "q", "q", "8", "8"],
+    [{"duration": "q", "dotted": true, "rest": true}, "8", "q", "q"],
+    ["q", {"duration": "8", "rest": true}, "8", "q", "q"],
+    ["q", "q", "8", "8", "8", {"duration": "8", "tie": true}],
+    ["q", "q", "q", "8", "8"]
+  ]
+}

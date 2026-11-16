@@ -1,0 +1,17 @@
+{
+  "id": "crooked-clock",
+  "title": "Crooked Clock",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1325,
+  "bars": [
+    [{"duration": "q", "dotted": true}, "8", {"duration": "q", "dotted": true}, "8"],
+    [{"duration": "8", "rest": true}, "8", "q", "q", "q"],
+    [{"duration": "q", "dotted": true}, "8", {"duration": "q", "dotted": true}, "8"],
+    [{"duration": "8", "rest": true}, "8", "q", "q", "q"],
+    [{"duration": "q", "dotted": true}, "8", {"duration": "q", "dotted": true}, "8"],
+    [{"duration": "8", "rest": true}, "8", "q", "q", "q"],
+    [{"duration": "q", "dotted": true}, "8", {"duration": "q", "dotted": true}, "8"],
+    [{"duration": "8", "rest": true}, "8", "q", "q", "q"]
+  ]
+}

@@ -14,3 +14,4 @@
 - Add or edit authored levels in `src/levels/`. Read the [level format](src/levels/README.md) before changing rhythm or IDs. The build derives puzzle versions from content and generates the Worker catalog.
 - `src/shared/apiContract.ts` defines the client and Worker API. Browser rated runs and retries live in `src/ratings/`. Worker routes start in `worker/index.ts`, and `worker/results.ts` owns the atomic ratings write.
 - D1 results are the replay source. Rating state and history are rebuildable caches. See [replay and rollout](docs/replay-rollout.md) for migrations, model activation, and preview deployment.
+- Use `npm run deploy:preview` or `npm run deploy` when publishing puzzle changes. These commands initialize puzzle versions in the target D1 database before publishing the Worker.

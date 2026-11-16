@@ -1,0 +1,17 @@
+{
+  "id": "the-midnight-express",
+  "title": "The Midnight Express",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1600,
+  "bars": [
+    ["8", "8", "8", "8", "8", "8", "q"],
+    [{"duration": "8", "rest": true}, "8", {"duration": "8", "rest": true}, "8", {"duration": "8", "rest": true}, "8", {"duration": "8", "rest": true}, "8"],
+    ["q", "q", "8", "8", "8", {"duration": "8", "tie": true}],
+    ["q", {"duration": "q", "rest": true}, "q", "q"],
+    ["8", "8", "8", "8", "8", "8", "q"],
+    [{"duration": "8", "rest": true}, "8", {"duration": "8", "rest": true}, "8", {"duration": "8", "rest": true}, "8", {"duration": "8", "rest": true}, "8"],
+    ["q", "q", "8", "8", "8", {"duration": "8", "tie": true}],
+    [{"duration": "8", "tie": true}, "8", "8", "8", "8", "8", "8", "8"]
+  ]
+}

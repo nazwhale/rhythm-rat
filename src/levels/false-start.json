@@ -1,0 +1,17 @@
+{
+  "id": "false-start",
+  "title": "False Start",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 1350,
+  "bars": [
+    ["8", "8", "q", "8", "8", "q"],
+    ["q", "8", "8", "q", "8", "8"],
+    [{"duration": "8", "rest": true}, "8", "q", "8", "8", "q"],
+    ["q", {"duration": "8", "rest": true}, "8", "q", "8", "8"],
+    ["8", "8", "q", "8", "8", "q"],
+    ["q", "8", "8", "q", "8", "8"],
+    ["8", "8", "q", {"duration": "8", "rest": true}, "8", "q"],
+    ["q", "8", "8", "q", {"duration": "8", "rest": true}, "8"]
+  ]
+}

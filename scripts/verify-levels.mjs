@@ -9,14 +9,14 @@ const levels = await Promise.all((await readdir(directory)).filter((name) => nam
 assert.equal(new Set(levels.map((level) => level.id)).size, levels.length)
 for (const level of levels) {
   const onsets = createOnsets(level)
-  assert.equal(onsets[0].seconds, 0)
+  const events = createEvents(level)
+  assert.equal(onsets[0].seconds, events.find((event) => !event.rest).seconds)
   assert.equal(levelSeconds(level), 32 * 60 / level.bpm)
   onsets.forEach((onset, index) => {
     assert.equal(onset.index, index)
     assert.ok(onset.seconds < levelSeconds(level))
     if (index) assert.ok(onset.seconds > onsets[index - 1].seconds)
   })
-  const events = createEvents(level)
   for (let bar = 0; bar < 8; bar++) assert.equal(events.find((note) => note.bar === bar).seconds, bar * 4 * 60 / level.bpm)
   assert.equal(onsets.length, events.filter((note, index) => !note.rest && !events[index - 1]?.tie).length)
   events.forEach((event, index) => {
