@@ -144,7 +144,7 @@ export function useOnlineRatings(levels: Level[]) {
     }
   }, [runs])
 
-  const recommend = useCallback((easierThan?: Level, candidates: Level[] = levels) => {
+  const recommend = useCallback((easierThan?: Level, candidates: Level[] = levels, afterFirstBiteWin = false) => {
     const data = account.current?.snapshot
     if (!data || !candidates.length) return 0
     const entries = candidates.flatMap(level => {
@@ -153,7 +153,7 @@ export function useOnlineRatings(levels: Level[]) {
     })
     if (!entries.length) return 0
     const ceiling = candidates.some(l => l.id === easierThan?.id) ? data.puzzles.find(p => p.levelId === easierThan?.id) : undefined
-    const chosen = entries[recommendIndex(data.player, entries, data.recent.map(r => r.puzzleId), ceiling)]
+    const chosen = entries[recommendIndex(data.player, entries, data.recent.map(r => r.puzzleId), { easierThan: ceiling, afterFirstBiteWin })]
     return Math.max(0, levels.findIndex(l => l.id === chosen.level.id))
   }, [levels])
 

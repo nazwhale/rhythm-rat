@@ -235,13 +235,13 @@ export function useGameRun(lab: Ratings, eligibleLevels: Level[], loginOpen: boo
 
   const advance = useCallback(() => {
     const next = rated
-      ? { levelIndex: lab.recommend(undefined, eligibleLevels), attempt: 1 }
+      ? { levelIndex: lab.recommend(undefined, eligibleLevels, challenge.attempt === 1), attempt: 1 }
       : (() => {
         const poolIndex = eligibleLevels.findIndex((candidate) => candidate.id === level.id)
         return { levelIndex: LEVELS.indexOf(eligibleLevels[(poolIndex + 1) % eligibleLevels.length]), attempt: 1 }
       })()
     prepare(next)
-  }, [prepare, rated, lab.recommend, eligibleLevels, level])
+  }, [prepare, rated, lab.recommend, eligibleLevels, level, challenge.attempt])
 
   const selectLevel = useCallback((levelIndex: number) => {
     if (LEVELS[levelIndex]) { lab.abandon(); prepare({ levelIndex, attempt: 1 }) }

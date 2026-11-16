@@ -191,7 +191,23 @@ test('content identity, recommendation and durable account-scoped outbox', async
   const rating = { rating: 1500, rd: 200, volatility: .06 }
   const candidates = [{ id: 'recent', rating }, { id: 'fresh', rating: { ...rating, rating: 1400 } }]
   assert.equal(recommendIndex(rating, candidates, ['recent']), 1)
-  assert.equal(recommendIndex(rating, candidates, [], rating), 1)
+  assert.equal(recommendIndex(rating, candidates, [], { easierThan: rating }), 1)
+})
+
+test('recommendations weight nearby practice puzzles and reserve stretch rounds for first-bite wins', () => {
+  const player = { rating: 1750, rd: 100, volatility: 0.06 }
+  const candidates = [
+    { id: 'practice-center', rating: { ...player, rating: 1595 } },
+    { id: 'practice-edge', rating: { ...player, rating: 1555 } },
+    { id: 'stretch', rating: player },
+  ]
+
+  assert.equal(recommendIndex(player, candidates, [], { random: () => 0.55 }), 0)
+  assert.equal(recommendIndex(player, candidates, [], { random: () => 0.9 }), 1)
+  assert.equal(recommendIndex(player, candidates, [], { afterFirstBiteWin: true, random: () => 0.24 }), 2)
+  assert.equal(recommendIndex(player, candidates, [], { afterFirstBiteWin: true, random: () => 0.25 }), 0)
+  assert.equal(recommendIndex(player, candidates, ['stretch'], { afterFirstBiteWin: true, random: () => 0 }), 0)
+  assert.equal(recommendIndex(player, candidates, [], { easierThan: player, random: () => 0 }), 0)
 })
 
 test('profiles start at 1000, record exact post-result history once, and protect private data', async () => {
