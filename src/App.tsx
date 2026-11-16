@@ -1,3 +1,4 @@
+import { HeaderControls } from './profile/PageLayout'
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import * as Tone from 'tone'
 import { Cheese } from './Cheese'
@@ -11,8 +12,9 @@ import { GROOVE_LAYERS, unlockedLayerCount } from './groove'
 import { RhythmNotation, type Judgement } from './RhythmNotation'
 import { ATTEMPTS_PER_LEVEL, createEvents, createOnsets, levelSeconds, nextChallenge, noteSpec, SCROLL_PIXELS_PER_SECOND, type Onset, type Duration, type Level } from './level'
 import { LEVELS } from './levels'
-import RatingLab from './ratings/RatingLab'
-import { useLocalRatings } from './ratings/useLocalRatings'
+import OnlineRatings from './ratings/OnlineRatings'
+import LoginDialog from './ratings/LoginDialog'
+import { useOnlineRatings } from './ratings/useOnlineRatings'
 import CountInPreview from './gameplay/CountInPreview'
 import RatEntrance from './gameplay/RatEntrance'
 import TapZone from './gameplay/TapZone'
@@ -22,7 +24,6 @@ import { HIT_WINDOW_SECONDS, judgeTap, judgeRelease, type TapJudgement } from '.
 
 type Counts = { perfect: number; good: number; miss: number; extra: number; longest: number }
 const EMPTY: Counts = { perfect: 0, good: 0, miss: 0, extra: 0, longest: 0 }
-const PLAY_MODE_KEY = 'rhythm-rat:play-mode:v1'
 type NoteTypeFilters = { crotchets: boolean; quavers: boolean; minims: boolean; rests: boolean; dotted: boolean; ties: boolean }
 const ALL_NOTE_TYPES: NoteTypeFilters = { crotchets: true, quavers: true, minims: true, rests: true, dotted: true, ties: true }
 
@@ -105,11 +106,10 @@ function InstrumentIcon({ id }: { id: MusicIcon }) {
 }
 
 export default function App() {
-  const lab = useLocalRatings(LEVELS)
-  const [rated, setRated] = useState(() => {
-    try { return window.localStorage.getItem(PLAY_MODE_KEY) === 'rated' } catch { return false }
-  })
-  const restoreRatedChallenge = useRef(rated)
+  const lab = useOnlineRatings(LEVELS)
+  const [loginOpen, setLoginOpen] = useState(false)
+  const rated = !!lab.user
+  const recommendedAccount = useRef<string | null>(null)
   const [challenge, setChallenge] = useState({ levelIndex: 0, attempt: 1 })
   const [noteTypeFilters, setNoteTypeFilters] = useState(ALL_NOTE_TYPES)
   const [noteTypeFilterMessage, setNoteTypeFilterMessage] = useState('')
@@ -137,7 +137,7 @@ export default function App() {
   useEffect(() => {
     if (phase === 'lost') anotherLevelButton.current?.focus({ preventScroll: true })
   }, [phase])
-  const [sound, setSound] = useState<BiteSound>('nom')
+  const [sound, setSound] = useState<BiteSound>('flute')
   const feedbackId = useRef(0)
   const clearedRun = useRef(false)
   const [allNotesCleared, setAllNotesCleared] = useState(false)
@@ -207,14 +207,18 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    try { window.localStorage.setItem(PLAY_MODE_KEY, rated ? 'rated' : 'unrated') } catch { /* Keep this session's choice when storage is unavailable. */ }
-  }, [rated])
-
-  useEffect(() => {
-    if (!restoreRatedChallenge.current) return
-    restoreRatedChallenge.current = false
+    if (lab.loading) return
+    if (!lab.user) {
+      if (recommendedAccount.current) {
+        lab.abandon(); prepare({ levelIndex: challenge.levelIndex, attempt: 1 })
+      }
+      recommendedAccount.current = null
+      return
+    }
+    if (!lab.ready || recommendedAccount.current === lab.user.id) return
+    recommendedAccount.current = lab.user.id
     prepare({ levelIndex: lab.recommend(undefined, eligibleLevels), attempt: 1 })
-  }, [prepare, lab.recommend, eligibleLevels])
+  }, [prepare, lab.recommend, lab.abandon, eligibleLevels, lab.loading, lab.user, lab.ready, challenge.levelIndex])
 
   const finish = useCallback(() => {
     const result = countsRef.current
@@ -245,11 +249,19 @@ export default function App() {
     if (rated) lab.finish(true, { ...countsRef.current })
   }, [onsets.length, rated, lab.finish])
 
+  const beginPending = useRef(false)
   const begin = useCallback(async () => {
+    if (beginPending.current) return
+    if (loginOpen || lab.loading) return
+    if (rated && !lab.user) { setLoginOpen(true); return }
+    if (rated && !lab.ready) { void lab.retry(); return }
+    beginPending.current = true
+    try {
     const generation = ++runGeneration.current
     await Tone.start()
     if (generation !== runGeneration.current) return
-    if (rated && !lab.start(level, challenge.attempt, (countInSeconds + .12) * 1000)) return
+    if (rated && !await lab.start(level, challenge.attempt, (countInSeconds + .12) * 1000)) return
+    if (generation !== runGeneration.current) { lab.abandon(); return }
     Tone.Transport.stop()
     Tone.Transport.cancel()
     Tone.Transport.position = 0
@@ -280,7 +292,8 @@ export default function App() {
     for (let i = 0; i < level.bars.length * level.beatsPerBar; i++) {
       synth.triggerAttackRelease(i % level.beatsPerBar === 0 ? 'C6' : 'G5', '32n', gameStart.current + i * beat, 0.2)
     }
-  }, [muted, sound, level, countInSeconds, beatSeconds, rated, challenge.attempt, lab.start])
+    } finally { beginPending.current = false }
+  }, [muted, sound, level, countInSeconds, beatSeconds, rated, challenge.attempt, lab.start, lab.abandon, lab.ready, lab.user, lab.loading, lab.retry, loginOpen])
 
   useEffect(() => {
     if (phase !== 'countin' && phase !== 'playing') return
@@ -336,23 +349,8 @@ export default function App() {
   }, [prepare, rated, lab.recommend, eligibleLevels, level])
 
   const selectLevel = useCallback((levelIndex: number) => {
-    if (LEVELS[levelIndex]) { lab.abandon(); setRated(false); prepare({ levelIndex, attempt: 1 }) }
+    if (LEVELS[levelIndex]) { lab.abandon(); prepare({ levelIndex, attempt: 1 }) }
   }, [prepare, lab.abandon])
-
-  const changePlayMode = useCallback((nextRated: boolean) => {
-    if (nextRated === rated) return
-    lab.abandon()
-    setRated(nextRated)
-    if (nextRated) {
-      prepare({ levelIndex: lab.recommend(undefined, eligibleLevels), attempt: 1 })
-    } else {
-      const currentAllowed = eligibleLevels.some((candidate) => candidate.id === level.id)
-      const nextLevelIndex = currentAllowed ? challenge.levelIndex : LEVELS.indexOf(eligibleLevels[0])
-      // Keep unrated play independent of an account or network, like the dinosaur game.
-      // Future rated submissions can add sign-up/login and a network requirement here.
-      prepare({ levelIndex: nextLevelIndex, attempt: 1 })
-    }
-  }, [rated, lab.abandon, lab.recommend, eligibleLevels, level, challenge.levelIndex, prepare])
 
   const press = useCallback(() => {
     if (phase === 'lost') return
@@ -417,44 +415,40 @@ export default function App() {
       if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button, summary, a')) return
       event.preventDefault(); release()
     }
-    const onBlur = cancelActiveHold
+    const onBlur = () => {
+      if (phase === 'countin' || phase === 'playing') { lab.abandon(); prepare({ levelIndex: challenge.levelIndex, attempt: rated ? 1 : challenge.attempt }) }
+    }
     window.addEventListener('keydown', onKey)
     window.addEventListener('keyup', onRelease)
+    const onVisibility = () => { if (document.hidden) onBlur() }
     window.addEventListener('blur', onBlur)
+    document.addEventListener('visibilitychange', onVisibility)
     return () => {
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('keyup', onRelease)
       window.removeEventListener('blur', onBlur)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [press, release, cancelActiveHold])
-
-  const resetExperiment = useCallback(() => {
-    if (window.confirm('Delete this browser’s rating experiment and all its results? Export first if you want to keep them.')) {
-      if (lab.reset()) prepare({ levelIndex: rated ? lab.recommend(undefined, eligibleLevels) : 0, attempt: 1 })
-    }
-  }, [lab.reset, prepare, rated, lab.recommend, eligibleLevels])
+  }, [press, release, phase, rated, lab.abandon, prepare, challenge.levelIndex, challenge.attempt])
 
   const levelProgress = Math.max(0, Math.min(1, elapsed / totalSeconds))
 
-  return <main className="app-shell">
-    <header className="topbar">
-      <a className="brand" href="#" onClick={(e) => e.preventDefault()}><img className="brand-mark" src="/rhythm-rat.svg" alt="" width="32" height="32" /><span>RHYTHM<span className="brand-light">RAT</span></span></a>
+  return <>
+    <HeaderControls>
       <div className="sound-controls"><label htmlFor="bite-sound">Bite sound</label><select id="bite-sound" value={sound} onChange={(event) => setSound(event.target.value as BiteSound)}>
         {BITE_SOUND_GROUPS.map(({ label, options }) => <optgroup key={label} label={label}>
           {options.map(({ id, label: name }) => <option key={id} value={id}>{name}</option>)}
         </optgroup>)}
       </select>
       <button className="sound-toggle" onClick={() => setMuted((v) => !v)} aria-label={muted ? 'Unmute sound' : 'Mute sound'}><span>{muted ? '◌' : '♫'}</span> {muted ? 'SOUND OFF' : 'SOUND ON'}</button></div>
-    </header>
-
+    </HeaderControls>
     <SilentModeReminder />
 
-    <fieldset className="play-mode-switch" disabled={phase === 'countin' || phase === 'playing'}>
-      <legend>PLAY MODE</legend>
-      <label><input type="radio" name="play-mode" checked={!rated} onChange={() => changePlayMode(false)} /> Unrated</label>
-      <label><input type="radio" name="play-mode" checked={rated} onChange={() => changePlayMode(true)} /> Rated</label>
-      {rated && <small>Challenges follow your local rating. Online sign-in and result submission can be added later.</small>}
-    </fieldset>
+    {!lab.user && !lab.loading && <div className="login-progress-prompt">
+      <span>Log in to track progress.</span>
+      <button type="button" className="account-button" disabled={phase === 'countin' || phase === 'playing'} onClick={() => setLoginOpen(true)}>Log in</button>
+    </div>}
+    {lab.loading && <p className="account-note" role="status">Checking account…</p>}
 
     <div className="admin-toolbar">
       <div className="note-type-filters" role="group" aria-label="Filter levels by note types">
@@ -496,18 +490,20 @@ export default function App() {
       </>}
     </div>
 
-    {rated && <RatingLab db={lab.db} error={lab.error} ready={lab.ready} canReset={lab.canReset} levels={LEVELS} busy={phase === 'countin' || phase === 'playing'}
-      onRename={lab.rename} onExport={lab.exportData} onReset={resetExperiment} />}
-
-    <section className="intro-row">
-      <div><h1>Eat to the beat.</h1></div>
-    </section>
+    {loginOpen && <LoginDialog onCancel={() => setLoginOpen(false)} onLogin={async user => {
+      await lab.acceptUser(user)
+      setLoginOpen(false)
+    }} />}
+    {!lab.user && lab.error && <p role="alert">{lab.error} Unrated play is still available.</p>}
 
     <section className="game-card">
-      <div className="game-heading"><div className="game-status"><span className="live-dot" /> {phase === 'lost' ? 'Caught!' : phase === 'finished' ? 'Complete' : phase === 'countin' ? 'Count in' : level.title}</div><div className="bpm"><strong className="time-signature" aria-label="4/4 time">4/4</strong><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
+      <div className="game-heading"><div className="game-heading-info"><div className="game-status"><span className="live-dot" /> {phase === 'lost' ? 'Caught!' : phase === 'finished' ? 'Complete' : phase === 'countin' ? 'Count in' : level.title}</div>
+        <span className="attempt-indicator">{rated ? challenge.attempt === 1 ? 'RATED' : 'RATED · DRAW CHANCE' : 'UNRATED'} · BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
+        {lab.user && phase !== 'lost' && <OnlineRatings snapshot={lab.snapshot} error={lab.error} saveStatus={lab.saveStatus} delta={lab.delta} onRetry={() => void lab.retry()} />}
+      </div><div className="bpm"><strong className="time-signature" aria-label="4/4 time">4/4</strong><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
 
       <div className={`runner-lane ${stumble ? 'lane-stumble' : ''} ${phase === 'finished' ? 'level-won' : ''}`}>
-        {phase === 'countin' && <CountInPreview level={level} countdown={countdown} />}
+        {(phase === 'ready' || phase === 'countin') && <CountInPreview level={level} countdown={phase === 'countin' ? countdown : undefined} />}
         <div className="instrument-hud" role="status" aria-live="polite" aria-label={musicStyle ? `${musicStyle} · active music layers` : 'Active music layers'} title={musicStyle}>
           {GROOVE_LAYERS.filter(({ entryBar }) => barStreak >= entryBar - 1).map(({ id, name }) => {
             const chosen = id === 'synth' ? musicInstruments?.lead : id === 'pad' ? musicInstruments?.chords : id === 'bass' ? musicInstruments?.bass : id === 'hats' ? musicInstruments?.timekeeper : null
@@ -589,7 +585,6 @@ export default function App() {
       </div>
 
       <div className="play-footer">
-        <span className="attempt-indicator">{rated ? challenge.attempt === 1 ? 'RATED' : 'UNRATED RETRY' : 'UNRATED'} · BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
         <TapZone phase={phase} cleared={allNotesCleared} hasHolds={hasHolds} resetKey={`${challenge.levelIndex}:${challenge.attempt}`}
           onPress={press} onRelease={release} onCancel={cancelActiveHold} />
       </div>
@@ -601,6 +596,7 @@ export default function App() {
           <Mousetrap />
           <h2 id="loss-title">Oh, snap.</h2>
           <p>The trap got you. There’s more cheese out there.</p>
+          {lab.user && <OnlineRatings snapshot={lab.snapshot} error={lab.error} saveStatus={lab.saveStatus} delta={lab.delta} onRetry={() => void lab.retry()} />}
           <div className="loss-next"><span>NEXT NIBBLE</span><strong>{level.title}</strong></div>
           <button ref={anotherLevelButton} className="loss-button" onClick={(event) => {
             event.currentTarget.blur()
@@ -613,5 +609,5 @@ export default function App() {
     </section>
     <CheeseBoard />
 
-  </main>
+  </>
 }

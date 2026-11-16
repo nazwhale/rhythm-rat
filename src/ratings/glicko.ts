@@ -10,7 +10,7 @@ export function expectedScore(player: Rating, opponent: Rating) {
 
 // Glickman's Glicko-2 algorithm, including the revised volatility root solver.
 // Online experiment: each rated encounter is one rating period. No calendar decay.
-export function updateRating(player: Rating, opponents: Opponent[]): Rating {
+export function updateRating(player: Rating, opponents: Opponent[], tau = TAU): Rating {
   const mu = (player.rating - 1500) / SCALE
   const phi = player.rd / SCALE
   if (!opponents.length) return { ...player, rd: Math.min(350, SCALE * Math.sqrt(phi * phi + player.volatility ** 2)) }
@@ -26,11 +26,11 @@ export function updateRating(player: Rating, opponents: Opponent[]): Rating {
   const a = Math.log(player.volatility ** 2)
   const f = (x: number) => {
     const ex = Math.exp(x)
-    return ex * (delta * delta - phi * phi - variance - ex) / (2 * (phi * phi + variance + ex) ** 2) - (x - a) / (TAU * TAU)
+    return ex * (delta * delta - phi * phi - variance - ex) / (2 * (phi * phi + variance + ex) ** 2) - (x - a) / (tau * tau)
   }
   let A = a
-  let B = delta * delta > phi * phi + variance ? Math.log(delta * delta - phi * phi - variance) : a - TAU
-  for (let k = 2; f(B) < 0 && delta * delta <= phi * phi + variance && k < 1000; k++) B = a - k * TAU
+  let B = delta * delta > phi * phi + variance ? Math.log(delta * delta - phi * phi - variance) : a - tau
+  for (let k = 2; f(B) < 0 && delta * delta <= phi * phi + variance && k < 1000; k++) B = a - k * tau
   let fA = f(A), fB = f(B)
   for (let iteration = 0; Math.abs(B - A) > 0.000001 && iteration < 1000; iteration++) {
     const C = A + (A - B) * fA / (fB - fA)
@@ -44,10 +44,11 @@ export function updateRating(player: Rating, opponents: Opponent[]): Rating {
   return { rating: 1500 + SCALE * (mu + newPhi * newPhi * improvement), rd: Math.min(350, SCALE * newPhi), volatility }
 }
 
-export function rateMatch(player: Rating, level: Rating, won: boolean) {
+export function rateMatch(player: Rating, level: Rating, outcome: boolean | number, tau = TAU) {
+  const score = typeof outcome === 'boolean' ? (outcome ? 1 : 0) : outcome
   // Both updates use the original opponent, never the other's updated rating.
   return {
-    player: updateRating(player, [{ ...level, score: won ? 1 : 0 }]),
-    level: updateRating(level, [{ ...player, score: won ? 0 : 1 }]),
+    player: updateRating(player, [{ ...level, score }], tau),
+    level: updateRating(level, [{ ...player, score: 1 - score }], tau),
   }
 }

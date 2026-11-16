@@ -500,3 +500,156 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
   .rat-approach { transform: none !important; opacity: 1 !important; }
   .rat, .rat-foot { animation: none !important; }
 }
+
+.login-dialog {
+  top: calc(var(--login-viewport-top, 0px) + var(--login-viewport-height, 100dvh) / 2);
+  bottom: auto;
+  transform: translateY(-50%);
+  margin-block: 0;
+  width: min(28rem, calc(100% - 24px));
+  max-height: calc(var(--login-viewport-height, 100dvh) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 2px solid #657666;
+  border-radius: 12px;
+  padding: clamp(1rem, 4vw, 1.5rem);
+  color: #293c30;
+  background: #f3f6ef;
+}
+.login-dialog::backdrop { background: #16251dcc; }
+.login-dialog h2 { margin: 0; }
+.login-dialog > p { margin: .5rem 0 1rem; overflow-wrap: anywhere; }
+.login-dialog form, .login-dialog label { display: grid; gap: .5rem; }
+.login-dialog form { gap: .75rem; }
+.login-dialog input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #bacab3;
+  border-radius: 6px;
+  padding: .65rem;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: max(16px, 1em);
+}
+.login-dialog input:focus { outline: 2px solid #527b54; outline-offset: 1px; }
+.login-code { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+.login-code legend { padding: 0; margin-bottom: .5rem; }
+.login-code-digits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; }
+.login-code-digits input { padding-inline: 0; text-align: center; font-size: 1.375rem; }
+.login-dialog .login-submit { min-height: 44px; background: #344d39; color: #fff7de; border-color: #344d39; }
+.login-dialog .login-submit:not(:disabled):hover { background: #293e32; }
+.login-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.login-actions .account-button { flex: 1 0 auto; min-height: 44px; padding: .5rem; font-size: .875rem; }
+.login-error { margin: 0; color: #9c4e43; }
+.rating-lab button { cursor: pointer; }
+.rating-lab button:disabled { cursor: wait; opacity: .6; }
+
+.game-heading-info { display: grid; gap: 6px; min-width: 0; }
+
+.account-navigation { display: flex; align-items: center; gap: 6px; margin: 14px 0; flex-wrap: wrap; }
+.account-navigation a { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 7px; color: #59695d; text-decoration: none; font-size: 13px; }
+.account-navigation a:hover, .account-navigation a[aria-current="page"] { color: #293e32; background: #e8eedf; }
+.account-navigation .pixel-trophy { width: 19px; height: 19px; }
+.pixel-trophy { display: inline-block; width: 28px; height: 28px; flex: none; image-rendering: pixelated; }
+.account-page { padding-bottom: 50px; }
+.account-hero { padding: 30px 4px; }
+.account-hero h1 { margin: 7px 0 12px; color: #293e32; font: 600 clamp(32px, 5vw, 48px) 'Space Grotesk', sans-serif; letter-spacing: -.04em; }
+.account-hero p { color: #657666; line-height: 1.6; }
+.account-eyebrow { margin: 0 0 8px; color: #728565; font: 10px 'DM Mono', monospace; letter-spacing: .14em; }
+.profile-card { padding: 26px; border: 1px solid #e0e7d9; background: #fffdf8; border-radius: 12px; margin-bottom: 22px; }
+.profile-card h2 { margin: 0 0 10px; color: #293e32; font-size: 23px; overflow-wrap: anywhere; }
+.profile-card p { line-height: 1.65; }
+.profile-identity { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; }
+.profile-identity form { display: grid; gap: 8px; min-width: 0; }
+.profile-identity label { font-weight: 600; }
+.profile-identity small, .account-note { color: #728075; font-size: 12px; line-height: 1.7; }
+.username-controls { display: flex; gap: 10px; }
+.username-controls input { min-width: 0; width: 100%; padding: 11px 12px; border: 1px solid #bacab3; border-radius: 6px; font: inherit; color: #293e32; background: #fff; }
+.account-button { padding: 10px 18px; border: 1px solid #b7c5a8; border-radius: 6px; background: #edf3e5; color: #344a3c; font: inherit; cursor: pointer; white-space: nowrap; }
+.account-button:hover { background: #e0ebd3; }
+.account-button:disabled { opacity: .45; cursor: default; }
+.account-page a { color: #4a6c37; }
+.text-button { padding: 4px 0; border: 0; background: none; color: #59695d; font: inherit; text-decoration: underline; cursor: pointer; }
+.profile-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin: 0 0 22px; }
+.profile-stats div { display: flex; flex-direction: column-reverse; gap: 6px; padding: 20px; background: #eaf0e2; border-radius: 10px; }
+.profile-stats dt { color: #687c60; font-size: 12px; }
+.profile-stats dd { margin: 0; color: #344a3c; font: 600 30px 'Space Grotesk', sans-serif; }
+.section-heading { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; justify-content: space-between; }
+.section-heading span { color: #728075; font-size: 12px; }
+.rating-graph svg { width: 100%; height: auto; overflow: visible; }
+.rating-graph svg text { fill: #728075; font: 12px 'DM Mono', monospace; }
+.graph-grid { stroke: #e0e7d9; stroke-dasharray: 4 5; }
+.graph-line { fill: none; stroke: #71974e; stroke-width: 3; stroke-linejoin: round; }
+.graph-point { fill: #71974e; stroke: #fffdf8; stroke-width: 2; cursor: crosshair; }
+.graph-point:focus { outline: none; fill: #d6a634; stroke: #293e32; }
+.graph-selection { min-height: 32px; display: flex; align-items: baseline; gap: 12px; }
+.graph-selection strong { color: #344a3c; font-size: 26px; }
+.graph-selection span { color: #728075; font-size: 12px; }
+.leaderboard-hero { display: flex; align-items: center; gap: 26px; }
+.hero-trophy { width: 80px; height: 80px; filter: drop-shadow(0 5px 0 #344a3c12); }
+.leaderboard-table-wrap { overflow-x: auto; }
+.leaderboard-table { width: 100%; border-collapse: collapse; text-align: left; }
+.leaderboard-table th, .leaderboard-table td { padding: 18px 14px; border-bottom: 1px solid #e8ecdf; }
+.leaderboard-table thead th { color: #728075; font: 10px 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .06em; }
+.leaderboard-table th[scope="row"] { font-weight: 500; overflow-wrap: anywhere; }
+.leaderboard-table td:last-child, .leaderboard-table th:last-child { text-align: right; }
+.podium-row { background: #f6f4e6; }
+.rank-cell { display: flex; gap: 12px; align-items: center; min-height: 28px; }
+.leaderboard-rating { color: #344a3c; font: 600 23px 'Space Grotesk', sans-serif; }
+.leaderboard-pagination { display: flex; gap: 14px; justify-content: space-between; align-items: center; margin: 22px 0; font-size: 12px; color: #728075; }
+.leaderboard-empty { padding: 35px 0; text-align: center; }
+.leaderboard-empty .pixel-trophy { width: 64px; height: 64px; margin-bottom: 16px; }
+@media(max-width:560px) {
+  .profile-card { padding: 18px 14px; }
+  .profile-identity { grid-template-columns: 1fr; gap: 18px; }
+  .profile-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .profile-stats div { padding: 16px; }
+  .leaderboard-hero { gap: 16px; }
+  .hero-trophy { width: 60px; height: 60px; }
+  .leaderboard-table th, .leaderboard-table td { padding: 14px 8px; }
+  .rank-cell { gap: 6px; }
+  .leaderboard-pagination { gap: 8px; }
+  .account-navigation a { padding: 8px 10px; }
+}
+
+/* The shared shell stays mounted while only route content loads. */
+.brand-and-tagline{display:flex;align-items:center;gap:22px;min-width:0}
+.brand-tagline{font:500 15px 'Space Grotesk',sans-serif;letter-spacing:-.02em;color:#687c5d;white-space:nowrap}
+.header-controls:empty{display:none}
+.nav-icon{display:inline-flex;width:20px;height:20px;align-items:center;image-rendering:pixelated;flex-shrink:0}
+.nav-icon svg{width:20px;height:16px}
+.component-loading{margin:28px 0;padding:24px;border:1px solid #e2e9d9;border-radius:10px;color:#74846b;background:#fafcf8}
+.mode-badge{padding:3px 6px;border-radius:4px;background:#eaf0e2;color:#607252;font:9px 'DM Mono',monospace;white-space:nowrap}
+.play-mode-switch label:has(input:checked) .mode-badge{background:#dae8c9;color:#385131}
+.page-content>.game-card{margin-top:20px}
+@media(max-width:800px){.brand-and-tagline{gap:12px}.brand-tagline{font-size:12px}}
+@media(max-width:560px){.brand-and-tagline{flex:1 1 100%;justify-content:space-between}.header-controls{margin-left:auto}.count-in-preview.is-waiting{top:45px}}
+
+/* Keep progress feedback beside the game; history lives on the profile. */
+.game-heading{height:auto;min-height:76px;padding-top:12px;padding-bottom:12px;gap:12px}
+.game-rating-status{display:flex;align-items:center;flex-wrap:wrap;gap:5px 12px;font:11px/1.4 'DM Sans',sans-serif;letter-spacing:0;color:#7b8876}
+.game-rating-status a{color:#5d7350;text-decoration:none;white-space:nowrap}
+.game-rating-status a:hover{text-decoration:underline}
+.game-rating-status strong{font-weight:600}
+.game-rating-status .rating-gain{color:#4b792f}.game-rating-status .rating-loss{color:#a3644e}
+.rating-save-error{flex-basis:100%;color:#9c4e43}
+.rating-save-error button{border:0;background:transparent;color:inherit;text-decoration:underline;padding:0 3px}
+.loss-card .game-rating-status{justify-content:center;margin:0 0 18px;color:#ecc2c3}
+.loss-card .game-rating-status a,.loss-card .rating-loss,.loss-card .rating-gain{color:#ffe0b5}
+.outcome-badge{display:inline-block;font-size:11px;padding:4px 8px;border-radius:5px;white-space:nowrap}
+.outcome-win{color:#476b33;background:#e9f1e1}.outcome-draw{color:#806b3a;background:#f4efd9}.outcome-loss{color:#985d50;background:#f7e9e3}
+.results-table time{font-size:11px;color:#7b8876;white-space:nowrap}
+
+.login-progress-prompt{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0 0;color:#687c60;font-size:13px}
+.puzzle-preview-trigger{border:0;background:transparent;padding:5px 0;color:inherit;font:inherit;text-align:left}
+.puzzle-preview-trigger span{color:#98a885;margin-left:7px}
+.puzzle-preview-trigger:hover,.puzzle-preview-trigger:focus-visible{color:#4a7038;text-decoration:underline}
+.score-preview{width:min(940px,calc(100vw - 24px));padding:18px;background:#fffefa;color:#34483a;border:1px solid #d7dfce;border-radius:12px;box-shadow:0 16px 70px #23392630;max-height:calc(100vh - 24px);overflow:auto}
+.score-preview-tooltip{position:fixed;z-index:100;pointer-events:none}
+.score-preview-dialog{max-width:940px;max-height:88vh;margin:auto}
+.score-preview-dialog::backdrop{background:#24362c65}
+.score-preview-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
+.score-preview-heading h2{margin:0;color:#34483a;font:600 18px 'Space Grotesk',sans-serif}
+.score-preview-heading p{margin:6px 0 0;color:#809073;font-size:11px}
+.puzzle-score{width:100%;min-height:120px}

@@ -5,9 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run catalog && tsc -b && tsc -p tsconfig.worker.json && vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types scripts/verify-levels.mjs && node --experimental-strip-types scripts/verify-groove.mjs && node --experimental-strip-types scripts/verify-styles.mjs && node --experimental-strip-types scripts/verify-scenery.mjs && node --experimental-strip-types scripts/verify-ratings.mjs && node --experimental-strip-types scripts/verify-gameplay.mjs"
+    "test": "node --experimental-strip-types scripts/verify-levels.mjs && node --experimental-strip-types scripts/verify-groove.mjs && node --experimental-strip-types scripts/verify-styles.mjs && node --experimental-strip-types scripts/verify-scenery.mjs && node --experimental-strip-types scripts/verify-ratings.mjs && node --experimental-strip-types scripts/verify-gameplay.mjs && npm run test:online",
+    "catalog": "node --experimental-strip-types scripts/catalog.mjs",
+    "dev:worker": "npm run catalog && wrangler dev",
+    "db:local": "npm run catalog && wrangler d1 migrations apply DB --local && npm run ratings:admin -- init --local",
+    "test:online": "npm run catalog && node --experimental-strip-types --test scripts/verify-online.mjs",
+    "deploy:dry-run": "npm run build && wrangler deploy --dry-run --env ''",
+    "deploy": "npm run build && wrangler d1 migrations apply DB --remote --env '' && npm run ratings:admin -- init && wrangler deploy --env ''",
+    "deploy:preview": "npm run build && wrangler d1 migrations apply DB --remote --env preview && npm run ratings:admin -- init --preview && wrangler deploy --env preview",
+    "ratings:admin": "node --experimental-strip-types scripts/ratings-admin.mjs",
+    "smoke:ratings": "node scripts/smoke-ratings.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -17,9 +26,12 @@
     "vexflow": "latest"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261115.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "miniflare": "^5.20261113.0-beta",
     "typescript": "latest",
-    "vite": "latest"
+    "vite": "latest",
+    "wrangler": "^4.162.0"
   }
 }

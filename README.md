@@ -79,6 +79,10 @@ clock is independent of rendering, skips stale steps after pauses, and is
 cleaned up with its audio engine. Background-tab timer throttling can still
 interrupt playback. `npm test` covers styles and continuous clock behavior.
 
-## Local rating experiment
+## Online ratings
 
-Open **Rating experiment** to try first-attempt Glicko-2 ratings saved in your browser. Choose **Find my next challenge**, then start the run normally. Export and reset controls are included; each browser learns independently. See [the experiment guide](docs/local-rating-lab.md) for rating policy, stored schema, testing questions and the later Workers/D1 path.
+Signed-out play is unrated. Use **Log in to track progress** to sign in with an emailed four-digit code; signed-in play is always rated. First-bite passes score a win; second-bite passes score a draw; failing both bites scores a loss. Leaving after a failed first bite saves that loss. Leaving before any result has no rating effect. Accounts and ratings persist across browsers and devices. Unrated play works without an account.
+
+Open **My profile** to edit your username and see your rating graph and puzzle outcomes. **Puzzles** lists shared difficulties; hover or focus a title for its eight-bar musical score, or click/tap to enlarge it. The game header keeps rating changes and save status close to the action. **Leaderboard** shows public usernames and ratings with pixel-art trophies. New accounts receive a two-word name from a 100-word rat-themed list. Players start at 1000. The entire rating graph is calculated from retained results under the current rules; historical points are rebuilt when those rules change.
+
+See [online setup and rating policy](docs/online-ratings.md) for local D1/email setup, testing, and Cloudflare deployment. The old [local experiment guide](docs/local-rating-lab.md) is historical; its browser data is not imported into online ratings.

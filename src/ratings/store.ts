@@ -1,4 +1,5 @@
-import { rateMatch, expectedScore, type Rating } from './glicko.ts'
+import { recommendIndex } from './recommend.ts'
+import { rateMatch, type Rating } from './glicko.ts'
 import type { Level } from '../level.ts'
 
 export const STORAGE_KEY = 'rhythm-rat:rating-lab:v1'
@@ -82,12 +83,8 @@ export function recoverOpenAttempts(db: LabDB, now: number): LabDB {
   return next
 }
 export function recommendLevel(db: LabDB, levels: Level[], easierThan?: Level) {
-  const recent = new Set(db.encounters.slice(-3).map((entry) => entry.levelVersionId))
-  const ceiling = easierThan ? levelRating(db, easierThan).rating : Infinity
-  const candidates = levels.map((level, index) => ({ level, index, rating: levelRating(db, level) })).filter(({ rating }) => rating.rating < ceiling)
-  const pool = candidates.length ? candidates : [{ level: easierThan ?? levels[0], index: Math.max(0, levels.findIndex((level) => level.id === easierThan?.id)), rating: levelRating(db, easierThan ?? levels[0]) }]
-  const fresh = pool.filter(({ level }) => !recent.has(versionFor(level).id))
-  return (fresh.length ? fresh : pool).sort((a, b) => Math.abs(expectedScore(playerRating(db), a.rating) - .7) - Math.abs(expectedScore(playerRating(db), b.rating) - .7))[0].index
+  const candidates = levels.map(level => ({ id: versionFor(level).id, rating: levelRating(db, level) }))
+  return recommendIndex(playerRating(db), candidates, db.encounters.slice(-3).reverse().map(e => e.levelVersionId), easierThan ? levelRating(db, easierThan) : undefined)
 }
 
 export function loadDB(storage: StoragePort, levels: Level[]) {

@@ -1,0 +1,10 @@
+DROP TRIGGER IF EXISTS legacy_rating_write_gate;
+ALTER TABLE users DROP COLUMN rating;
+ALTER TABLE users DROP COLUMN rd;
+ALTER TABLE users DROP COLUMN volatility;
+ALTER TABLE users DROP COLUMN revision;
+ALTER TABLE puzzles DROP COLUMN rating;
+ALTER TABLE puzzles DROP COLUMN rd;
+ALTER TABLE puzzles DROP COLUMN volatility;
+ALTER TABLE puzzles DROP COLUMN revision;
+ALTER TABLE results DROP COLUMN player_rating_after;
