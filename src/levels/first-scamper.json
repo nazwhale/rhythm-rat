@@ -1,0 +1,17 @@
+{
+  "id": "first-scamper",
+  "title": "First Scamper",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 625,
+  "bars": [
+    ["h", "h"],
+    ["h", "h"],
+    ["h", "h"],
+    ["h", "8", "8", {"duration": "q", "rest": true}],
+    ["h", "h"],
+    ["h", "h"],
+    ["h", "h"],
+    ["h", "8", "8", {"duration": "q", "rest": true}]
+  ]
+}

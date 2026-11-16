@@ -1,6 +1,6 @@
 # Rhythm Rat levels
 
-Each JSON file is discovered automatically. Levels currently run in ascending order of their provisional rating, starting with Tiny Nibbles. Passing ends in the mouse hole; continue to the next level with Space, a tap or Next Level. The first failure immediately reloads the same level with a fading “Second bite” notice. The second failure shows a red pixel-art mousetrap loss screen and selects the previous, easier level (or stays on Tiny Nibbles if already at the easiest level). The Another Level button starts that level’s count-in immediately; it also supports Enter or Space when focused. Only a win advances to a harder level. From either ready scene, Space or a tap starts the one-bar count-in. After winning the final level, the sequence loops. Attempts are per encounter and reset on a new level or page reload.
+Each JSON file is discovered automatically. Levels currently run in ascending order of their provisional rating, starting with One Crumb. Passing ends in the mouse hole; continue to the next level with Space, a tap or Next Level. The first failure immediately reloads the same level with a fading “Second bite” notice. The second failure shows a red pixel-art mousetrap loss screen and selects the previous, easier level (or stays on One Crumb if already at the easiest level). The Another Level button starts that level’s count-in immediately; it also supports Enter or Space when focused. Only a win advances to a harder level. From either ready scene, Space or a tap starts the one-bar count-in. After winning the final level, the sequence loops. Attempts are per encounter and reset on a new level or page reload.
 
 ```json
 {
@@ -53,7 +53,9 @@ Run `npm test` to check bar totals, source rhythm coverage, rest/tie scheduling,
 
 ## Learning progression
 
-All levels stay at 110 BPM and eight bars. Six beginner additions precede The First Lap, starting with half notes before building toward Steady Bites, all easier than the original level 3, Pause for Cheese. They use no rests or holds, at most one quaver pair per bar, and at least four bars without quavers. The four stepping-stone ratings sit between The First Lap and Rest & Relish; ratings remain provisional rather than measured difficulty.
+All levels stay at 110 BPM and eight bars. One Crumb starts with eight taps and eight minim rests. Seven more starters add on-beat taps and predictable gaps, then four bridge levels introduce quaver pairs and a crotchet rest before a pair. Eight additional challenges cover quaver runs, offbeat entries, dotted crotchets and holds. Their initial online targets span 800–1050, 1125–1250 and 1450–1600 respectively.
+
+In the original progression, six beginner additions precede The First Lap, starting with half notes before building toward Steady Bites, all easier than the original level 3, Pause for Cheese. They use no rests or holds, at most one quaver pair per bar, and at least four bars without quavers. The four stepping-stone ratings sit between The First Lap and Rest & Relish; ratings remain provisional rather than measured difficulty.
 
 | Order | Level | Introduces |
 | --- | --- | --- |

@@ -1,0 +1,17 @@
+{
+  "id": "late-breakfast",
+  "title": "Late Breakfast",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 375,
+  "bars": [
+    ["h", "h"],
+    ["h", "h"],
+    ["h", "h"],
+    [{"duration": "h", "rest": true}, "h"],
+    ["h", "h"],
+    ["h", "h"],
+    ["h", "h"],
+    [{"duration": "h", "rest": true}, "h"]
+  ]
+}

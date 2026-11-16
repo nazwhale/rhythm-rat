@@ -1,0 +1,17 @@
+{
+  "id": "quick-grip",
+  "title": "Quick Grip",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 990,
+  "bars": [
+    ["q", "8", "8", "q", "q"],
+    ["q", "q", "q", "q"],
+    ["q", {"duration": "8", "tie": true}, "8", "q", "q"],
+    ["q", "q", "q", "q"],
+    ["q", "8", "8", "q", "q"],
+    ["q", "q", "q", "q"],
+    ["q", {"duration": "8", "tie": true}, "8", "q", "q"],
+    ["q", "q", "q", "q"]
+  ]
+}

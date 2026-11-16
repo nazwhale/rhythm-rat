@@ -1,0 +1,17 @@
+{
+  "id": "kitchen-clock",
+  "title": "Kitchen Clock",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 550,
+  "bars": [
+    ["q", "q", "q", {"duration": "q", "rest": true}],
+    ["q", "q", "q", {"duration": "q", "rest": true}],
+    ["q", "q", "q", {"duration": "q", "rest": true}],
+    ["q", "q", "q", {"duration": "q", "rest": true}],
+    ["h", "q", "q"],
+    ["h", "q", "q"],
+    ["h", "q", "q"],
+    ["h", "q", "q"]
+  ]
+}

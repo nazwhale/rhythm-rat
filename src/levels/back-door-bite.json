@@ -1,0 +1,17 @@
+{
+  "id": "back-door-bite",
+  "title": "Back Door Bite",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 400,
+  "bars": [
+    ["h", "h"],
+    ["h", {"duration": "q", "rest": true}, "q"],
+    ["h", "h"],
+    ["h", {"duration": "q", "rest": true}, "q"],
+    ["h", "h"],
+    ["h", {"duration": "q", "rest": true}, "q"],
+    ["h", "h"],
+    ["h", {"duration": "q", "rest": true}, "q"]
+  ]
+}

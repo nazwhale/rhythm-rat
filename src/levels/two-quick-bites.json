@@ -1,0 +1,17 @@
+{
+  "id": "two-quick-bites",
+  "title": "Two Quick Bites",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 450,
+  "bars": [
+    ["h", "h"],
+    ["h", "h"],
+    ["h", "h"],
+    ["q", "q", "q", {"duration": "q", "rest": true}],
+    ["h", "h"],
+    ["h", "h"],
+    ["h", "h"],
+    ["q", "q", "q", {"duration": "q", "rest": true}]
+  ]
+}

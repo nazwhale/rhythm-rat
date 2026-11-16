@@ -1,0 +1,17 @@
+{
+  "id": "peek-out",
+  "title": "Peek Out",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 350,
+  "bars": [
+    ["h", {"duration": "h", "rest": true}],
+    ["h", "h"],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", "h"],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", "h"],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", "h"]
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "second-crumb",
+  "title": "Second Crumb",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 325,
+  "bars": [
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", "h"],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", "h"]
+  ]
+}

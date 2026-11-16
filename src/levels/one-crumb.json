@@ -1,0 +1,17 @@
+{
+  "id": "one-crumb",
+  "title": "One Crumb",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "rating": 300,
+  "bars": [
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}],
+    ["h", {"duration": "h", "rest": true}]
+  ]
+}
