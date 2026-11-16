@@ -45,7 +45,7 @@ Dots beside notes indicate dotted durations; the small articulation dots above n
 
 ## Future ratings
 
-`rating` is an authored difficulty seed, not a shared live rating. Stable ids let results reference a level independently of its title or file name. The optional Rating experiment now learns separate player and level Glicko-2 ratings in each browser; these do not reorder the campaign or change the JSON seeds. See [the local rating guide](../../docs/local-rating-lab.md).
+`rating` is an authored difficulty seed, not a shared live rating. Stable ids let results reference a level independently of its title or file name. Online rated play learns shared puzzle difficulty separately from the authored campaign order and JSON seeds. See [the online ratings guide](../../docs/online-ratings.md).
 
 The experiment selects challenges near a predicted 70% pass chance, avoids recent encounters where possible, and updates both ratings from the first attempt only. Second-bite outcomes are saved separately as practice. Repeats are allowed for local testing. Shared level ratings and authoritative outcomes will need a backend that aggregates results from independent users; one browser's difficulty estimates should not be treated as globally calibrated.
 

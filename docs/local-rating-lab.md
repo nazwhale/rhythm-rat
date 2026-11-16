@@ -1,4 +1,6 @@
-# Local rating experiment
+# Local rating experiment (historical)
+
+This describes the retired browser-only experiment. For the current game, see [online ratings](online-ratings.md).
 
 Open **Rating experiment**, optionally set a player name, then choose **Find my next challenge** and start normally. First attempts rate both the player and the level. A win is saved as soon as the final required tap or hold release succeeds, before the rat finishes travelling; extra taps or a refresh during that ending cannot reverse it. Second bite records a practice attempt under the same encounter without changing ratings. Wins suggest another challenge near a predicted 70% pass probability; after a final loss, suggestions are restricted to lower learned difficulties where available. The last three encounters are avoided where possible. The normal picker leaves rated mode and campaign/scenery order stays authored.
 

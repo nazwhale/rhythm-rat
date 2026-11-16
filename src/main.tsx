@@ -1,7 +1,9 @@
 import React, { lazy, Suspense, useEffect, useState, type MouseEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import PageLayout from './profile/PageLayout'
-import './style.css'
+import './styles/site.css'
+import './styles/gameplay.css'
+import './styles/account.css'
 const App = lazy(() => import('./App'))
 const ProfilePage = lazy(() => import('./profile/ProfilePage'))
 const PuzzlesPage = lazy(() => import('./profile/PuzzlesPage'))
