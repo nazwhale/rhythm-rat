@@ -194,19 +194,21 @@ test('content identity, recommendation and durable account-scoped outbox', async
   assert.equal(recommendIndex(rating, candidates, [], { easierThan: rating }), 1)
 })
 
-test('recommendations weight nearby practice puzzles and reserve stretch rounds for first-bite wins', () => {
+test('recommendations choose harder puzzles on 30% of regular rolls and use practice on recovery', () => {
   const player = { rating: 1750, rd: 100, volatility: 0.06 }
   const candidates = [
     { id: 'practice-center', rating: { ...player, rating: 1595 } },
     { id: 'practice-edge', rating: { ...player, rating: 1555 } },
-    { id: 'stretch', rating: player },
+    { id: 'even', rating: player },
+    { id: 'stretch', rating: { ...player, rating: 1770 } },
   ]
 
   assert.equal(recommendIndex(player, candidates, [], { random: () => 0.55 }), 0)
   assert.equal(recommendIndex(player, candidates, [], { random: () => 0.9 }), 1)
-  assert.equal(recommendIndex(player, candidates, [], { afterFirstBiteWin: true, random: () => 0.24 }), 2)
-  assert.equal(recommendIndex(player, candidates, [], { afterFirstBiteWin: true, random: () => 0.25 }), 0)
-  assert.equal(recommendIndex(player, candidates, ['stretch'], { afterFirstBiteWin: true, random: () => 0 }), 0)
+  assert.equal(recommendIndex(player, candidates, [], { random: () => 0.299 }), 3)
+  assert.equal(recommendIndex(player, candidates, [], { random: () => 0.30 }), 0)
+  assert.equal(recommendIndex(player, candidates, ['stretch'], { random: () => 0 }), 3)
+  assert.equal(recommendIndex(player, candidates.slice(0, 3), [], { random: () => 0 }), 0)
   assert.equal(recommendIndex(player, candidates, [], { easierThan: player, random: () => 0 }), 0)
 })
 

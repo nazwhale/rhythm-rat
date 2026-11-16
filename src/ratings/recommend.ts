@@ -3,20 +3,30 @@ import { expectedScore, type Rating } from './glicko.ts'
 type Candidate = { id: string; rating: Rating }
 type RecommendationOptions = {
   easierThan?: Rating
-  afterFirstBiteWin?: boolean
   random?: () => number
 }
 
 const PRACTICE_BAND = { min: 0.65, target: 0.70, max: 0.75 }
-const STRETCH_BAND = { min: 0.45, target: 0.50, max: 0.55 }
-const STRETCH_CHANCE = 0.25
+const STRETCH_BAND = { min: 0.45, target: 0.47, max: 0.49 }
+const STRETCH_CHANCE = 0.30
 
-function eligiblePuzzlePool(candidates: Candidate[], recent: string[], easierThan?: Rating) {
-  const easier = easierThan ? candidates.filter(candidate => candidate.rating.rating < easierThan.rating) : candidates
-  const pool = easier.length ? easier : candidates
+function preferFreshPuzzles(pool: Candidate[], recent: string[]) {
   const recentlyPlayed = recent.slice(0, 3)
   const fresh = pool.filter(candidate => !recentlyPlayed.includes(candidate.id))
   return fresh.length ? fresh : pool
+}
+
+function chooseDifficultyPool(player: Rating, candidates: Candidate[], random: () => number, easierThan?: Rating) {
+  if (easierThan) {
+    const recovery = candidates.filter(candidate => candidate.rating.rating < easierThan.rating)
+    return { pool: recovery.length ? recovery : candidates, band: PRACTICE_BAND }
+  }
+
+  const harder = candidates.filter(candidate => candidate.rating.rating > player.rating)
+  if (random() < STRETCH_CHANCE && harder.length) return { pool: harder, band: STRETCH_BAND }
+
+  const practice = candidates.filter(candidate => candidate.rating.rating <= player.rating)
+  return { pool: practice.length ? practice : candidates, band: PRACTICE_BAND }
 }
 
 function pickWeighted<T>(choices: { value: T; weight: number }[], random: () => number): T {
@@ -46,10 +56,9 @@ function pickPuzzle(player: Rating, pool: Candidate[], band: typeof PRACTICE_BAN
 }
 
 export function recommendIndex(player: Rating, candidates: Candidate[], recent: string[], {
-  easierThan, afterFirstBiteWin, random = Math.random,
+  easierThan, random = Math.random,
 }: RecommendationOptions = {}) {
   if (!candidates.length) return 0
-  const pool = eligiblePuzzlePool(candidates, recent, easierThan)
-  const band = afterFirstBiteWin && !easierThan && random() < STRETCH_CHANCE ? STRETCH_BAND : PRACTICE_BAND
-  return candidates.indexOf(pickPuzzle(player, pool, band, random))
+  const { pool, band } = chooseDifficultyPool(player, candidates, random, easierThan)
+  return candidates.indexOf(pickPuzzle(player, preferFreshPuzzles(pool, recent), band, random))
 }
