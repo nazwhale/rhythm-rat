@@ -8,7 +8,7 @@ export function startSecondBite(run: RatedRun) {
 export function completedBite(run: RatedRun, won: boolean): PendingResult | null {
   // Duplicate completion callbacks cannot finish a second bite before it starts.
   if (run.stage === 'waiting') return null
-  const result = { id:run.id,userId:run.userId,puzzleId:run.puzzleId,score:won ? (run.stage === 'first' ? 1 : 0.5) : 0 }
+  const result: PendingResult = { id:run.id,userId:run.userId,puzzleId:run.puzzleId,score:won ? (run.stage === 'first' ? 1 : 0.5) : 0 }
   if (!won && run.stage === 'first') { run.stage='waiting'; return {...result,deferred:true} }
   return result
 }

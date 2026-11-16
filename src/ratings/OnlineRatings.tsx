@@ -1,4 +1,4 @@
-import type { RatingsSnapshot } from './onlineTypes'
+import type { RatingsSnapshot } from '../shared/apiContract'
 export default function OnlineRatings({ snapshot, error, saveStatus, delta, onRetry }: {
   snapshot: RatingsSnapshot | null; error: string; saveStatus: string; delta: number | null; onRetry: () => void
 }) {

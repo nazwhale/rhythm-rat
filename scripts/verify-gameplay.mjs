@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
 import { getLevelNoteTypes } from '../src/gameplay/levelPreview.ts'
-import { hasCompletedAllNotes } from '../src/gameplay/runState.ts'
+import { hasCompletedAllNotes, nextRunPhase } from '../src/gameplay/runState.ts'
 import { noteSpec } from '../src/level.ts'
 
 const directory = new URL('../src/levels/', import.meta.url)
@@ -30,4 +30,11 @@ assert.equal(hasCompletedAllNotes({ ...success, good: 3 }, 16, false), false)
 assert.equal(hasCompletedAllNotes({ ...success, miss: 1 }, 16, false), false)
 assert.equal(hasCompletedAllNotes({ ...success, extra: 1 }, 16, false), false)
 assert.equal(hasCompletedAllNotes({ perfect: 0, good: 0, miss: 0, extra: 0 }, 0, false), false)
+function phases(events) {
+  let phase = 'ready'
+  return events.map(event => phase = nextRunPhase(phase, event))
+}
+assert.deepEqual(phases(['start', 'downbeat', 'clear', 'fail', 'arrive']), ['countin', 'playing', 'cleared', 'cleared', 'finished'])
+assert.deepEqual(phases(['start', 'downbeat', 'prepare', 'start', 'downbeat', 'fail', 'start']), ['countin', 'playing', 'ready', 'countin', 'playing', 'lost', 'countin'])
+assert.deepEqual(phases(['start', 'prepare', 'downbeat']), ['countin', 'ready', 'ready'])
 console.log('Verified exact note-type previews for every level, dots/rests/ties, and completion only after all successful taps and hold releases.')

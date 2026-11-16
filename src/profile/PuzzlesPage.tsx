@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import PuzzlePreview from './PuzzlePreview'
 import { usePuzzlePreview } from './usePuzzlePreview'
 import { api } from '../ratings/api'
-import type { PuzzleCatalog } from '../ratings/onlineTypes'
+import type { PuzzleCatalog } from '../shared/apiContract'
 export default function PuzzlesPage() {
   const { preview, previewId, close, triggerProps } = usePuzzlePreview()
   const [catalog,setCatalog]=useState<PuzzleCatalog|null>(null)
@@ -11,7 +11,7 @@ export default function PuzzlesPage() {
   useEffect(()=>{
     let active=true
     setError('')
-    void api<PuzzleCatalog>('puzzles').then(value=>{if(active)setCatalog(value)}).catch(err=>{if(active)setError(err instanceof Error?err.message:'Could not load puzzles.')})
+    void api.get('puzzles').then(value=>{if(active)setCatalog(value)}).catch(err=>{if(active)setError(err instanceof Error?err.message:'Could not load puzzles.')})
     return ()=>{active=false}
   },[retry])
   return <>

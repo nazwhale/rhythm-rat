@@ -8,6 +8,8 @@ import { Miniflare, Log, LogLevel, convertV4MiniflareOptions } from 'miniflare'
 import { holdRun, withAvailableRun } from '../src/ratings/runLock.ts'
 import { rateMatch } from '../src/ratings/glicko.ts'
 import { completedBite, startSecondBite } from '../src/ratings/ratedRun.ts'
+import { createRatedRunController } from '../src/ratings/ratedRunController.ts'
+import { createResultDelivery } from '../src/ratings/resultDelivery.ts'
 import { createModel, replayPage, activate, validateModel, resumeModel, pause } from '../worker/rebuild.ts'
 import { DEFAULT_SETTINGS, guard, stateWrite } from '../worker/ratingModel.ts'
 import { RAT_WORDS, randomUsername } from '../worker/usernames.ts'
@@ -415,6 +417,81 @@ test('run locks protect deferred results until release, then allow recovery', as
     if(descriptor)Object.defineProperty(globalThis,'navigator',descriptor)
     else delete globalThis.navigator
   }
+})
+
+test('rated run controller retains a deferred loss and releases the lock when leaving', async () => {
+  const retained = []
+  const events = []
+  const runs = createRatedRunController(
+    async id => async () => { events.push(`release:${id}`) },
+    () => 'run-id',
+    result => retained.push(result),
+    () => events.push('flush'),
+  )
+  assert.equal(await runs.start('player', 'puzzle', () => true), true)
+  runs.finish(false)
+  assert.equal(retained[0].deferred, true)
+  assert.deepEqual(events, [])
+  assert.equal(runs.retry('another-player'), false)
+  runs.abandon()
+  await Promise.resolve()
+  assert.deepEqual(retained[1], { id: 'run-id', userId: 'player', puzzleId: 'puzzle', score: 0 })
+  assert.deepEqual(events, ['release:run-id', 'flush'])
+})
+
+test('result delivery checks the account and re-reads an upgraded result under its lock', async () => {
+  const memory = new Map()
+  const storage = {
+    get length() { return memory.size },
+    key: i => [...memory.keys()][i],
+    getItem: key => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, value),
+    removeItem: key => memory.delete(key),
+  }
+  const result = { id: 'run-id', userId: 'player', puzzleId: 'puzzle', score: 0, deferred: true }
+  let current = true
+  let submitCount = 0
+  const delivery = createResultDelivery({
+    storage: () => storage,
+    withAvailableRun: async (_id, save) => {
+      if (!submitCount) delivery.retain({ ...result, score: 0.5, deferred: false })
+      await save()
+    },
+    submit: async saved => {
+      submitCount++
+      assert.equal(saved.score, 0.5)
+      if (submitCount === 1) throw new Error('Response lost')
+      return { duplicate: true, delta: null, ratingModelId: 'current' }
+    },
+  })
+  delivery.retain(result)
+  delivery.retain({ ...result, id: 'other-run', userId: 'another-player' })
+  const flush = () => delivery.deliver('player', () => current, () => {}, () => {})
+  await assert.rejects(flush(), /Response lost/)
+  assert.equal(pendingResults(storage, 'player')[0].score, 0.5)
+  current = false
+  await flush()
+  assert.equal(submitCount, 1)
+  current = true
+  await flush()
+  assert.equal(submitCount, 2)
+  assert.equal(pendingResults(storage, 'player').length, 0)
+  assert.equal(pendingResults(storage, 'another-player').length, 1)
+})
+
+test('a result retained in memory can still submit when browser storage is blocked', async () => {
+  const ids = []
+  const delivery = createResultDelivery({
+    storage: () => { throw new Error('Storage unavailable') },
+    withAvailableRun: async (_id, save) => save(),
+    submit: async ({ id }) => {
+      ids.push(id)
+      return { duplicate: false, delta: 0, ratingModelId: 'current' }
+    },
+  })
+  assert.equal(delivery.retain({ id: 'run-id', userId: 'player', puzzleId: 'puzzle', score: 1 }), false)
+  await delivery.deliver('player', () => true, () => {}, () => {})
+  assert.deepEqual(ids, ['run-id'])
 })
 
 test('public puzzle catalog matches the active recommendation cache and excludes account data', async () => {

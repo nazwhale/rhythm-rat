@@ -1,16 +1,15 @@
 import { HeaderControls } from './profile/PageLayout'
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
-import * as Tone from 'tone'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { Cheese } from './Cheese'
 import FinishHole from './FinishHole'
 import CheeseBoard from './CheeseBoard'
 import WorldScenery from './WorldScenery'
 import { BITE_SOUND_GROUPS } from './biteAudio'
-import { createRunAudio, type BiteSound } from './audio'
-import { type MusicIcon, type MusicInstruments } from './musicInstruments'
-import { GROOVE_LAYERS, unlockedLayerCount } from './groove'
-import { RhythmNotation, type Judgement } from './RhythmNotation'
-import { ATTEMPTS_PER_LEVEL, createEvents, createOnsets, levelSeconds, nextChallenge, noteSpec, SCROLL_PIXELS_PER_SECOND, type Onset, type Duration, type Level } from './level'
+import { type BiteSound } from './audio'
+import { type MusicIcon } from './musicInstruments'
+import { GROOVE_LAYERS } from './groove'
+import { RhythmNotation } from './RhythmNotation'
+import { ATTEMPTS_PER_LEVEL, noteSpec, SCROLL_PIXELS_PER_SECOND, type Duration, type Level } from './level'
 import { LEVELS } from './levels'
 import OnlineRatings from './ratings/OnlineRatings'
 import LoginDialog from './ratings/LoginDialog'
@@ -19,11 +18,9 @@ import CountInPreview from './gameplay/CountInPreview'
 import RatEntrance from './gameplay/RatEntrance'
 import TapZone from './gameplay/TapZone'
 import SilentModeReminder from './gameplay/SilentModeReminder'
-import { hasCompletedAllNotes, type GamePhase } from './gameplay/runState'
-import { HIT_WINDOW_SECONDS, judgeTap, judgeRelease, type TapJudgement } from './timing'
+import { useGameRun } from './gameplay/useGameRun'
+import { HIT_WINDOW_SECONDS } from './timing'
 
-type Counts = { perfect: number; good: number; miss: number; extra: number; longest: number }
-const EMPTY: Counts = { perfect: 0, good: 0, miss: 0, extra: 0, longest: 0 }
 type NoteTypeFilters = { crotchets: boolean; quavers: boolean; minims: boolean; rests: boolean; dotted: boolean; ties: boolean }
 const ALL_NOTE_TYPES: NoteTypeFilters = { crotchets: true, quavers: true, minims: true, rests: true, dotted: true, ties: true }
 
@@ -109,327 +106,20 @@ export default function App() {
   const lab = useOnlineRatings(LEVELS)
   const [loginOpen, setLoginOpen] = useState(false)
   const rated = !!lab.user
-  const recommendedAccount = useRef<string | null>(null)
-  const [challenge, setChallenge] = useState({ levelIndex: 0, attempt: 1 })
   const [noteTypeFilters, setNoteTypeFilters] = useState(ALL_NOTE_TYPES)
   const [noteTypeFilterMessage, setNoteTypeFilterMessage] = useState('')
   const matchingLevels = useMemo(() => LEVELS.filter((candidate) => levelMatchesNoteTypes(candidate, noteTypeFilters)), [noteTypeFilters])
   const eligibleLevels = matchingLevels
-  const level = LEVELS[challenge.levelIndex]
-  const onsets = useMemo(() => createOnsets(level), [level])
-  const events = useMemo(() => createEvents(level), [level])
-  const hasHolds = onsets.some((note) => note.holdSeconds > 0)
-  const totalSeconds = levelSeconds(level)
-  const beatSeconds = 60 / level.bpm
-  const countInSeconds = level.beatsPerBar * beatSeconds
-  // Half a sixteenth separates the visual barline from the next downbeat.
-  const barlineInsetPixels = beatSeconds / 8 * SCROLL_PIXELS_PER_SECOND
-  const [scenerySeed, setScenerySeed] = useState(() => Math.floor(Math.random() * 0xffffffff))
-  const [phase, setPhase] = useState<GamePhase>('ready')
-  const [elapsed, setElapsed] = useState(-4 * 60 / LEVELS[0].bpm)
-  const [countdown, setCountdown] = useState(4)
-  const [muted, setMuted] = useState(false)
-  const [marks, setMarks] = useState<Record<number, Judgement>>({})
-  const [feedback, setFeedback] = useState<{ id: number; seconds: number; label: string; tone: string }[]>([])
-  const [notice, setNotice] = useState('')
+  const {
+    challenge, level, events, onsets, hasHolds, totalSeconds, beatSeconds, countInSeconds, barlineInsetPixels,
+    scenerySeed, phase, elapsed, countdown, muted, setMuted, sound, setSound, marks, feedback, dismissFeedback,
+    notice, setNotice, allNotesCleared, bitePulse, bite, eating, stumble, holdingIndex, barStreak, musicStyle,
+    musicInstruments, perfect, begin, prepare, selectLevel, press, release, cancelActiveHold,
+  } = useGameRun(lab, eligibleLevels, loginOpen)
   const anotherLevelButton = useRef<HTMLButtonElement>(null)
-
   useEffect(() => {
     if (phase === 'lost') anotherLevelButton.current?.focus({ preventScroll: true })
   }, [phase])
-  const [sound, setSound] = useState<BiteSound>('flute')
-  const feedbackId = useRef(0)
-  const clearedRun = useRef(false)
-  const [allNotesCleared, setAllNotesCleared] = useState(false)
-  const [bitePulse, setBitePulse] = useState(0)
-  const [bite, setBite] = useState<{ duration: Duration; variant: number }>({ duration: 'q', variant: 0 })
-  const [eating, setEating] = useState(false)
-  const [stumble, setStumble] = useState(false)
-  const [holdingIndex, setHoldingIndex] = useState<number | null>(null)
-  const activeHold = useRef<{ onset: Onset; result: TapJudgement } | null>(null)
-  const lastMunch = useRef(0)
-  const synthRef = useRef<ReturnType<typeof createRunAudio> | null>(null)
-  const gameStart = useRef(0)
-  const runGeneration = useRef(0)
-  const judged = useRef(new Set<number>())
-  const streakRef = useRef(0)
-  const completedBars = useRef(0)
-  const [musicStyle, setMusicStyle] = useState('')
-  const [musicInstruments, setMusicInstruments] = useState<MusicInstruments | null>(null)
-  const [barStreak, setBarStreak] = useState(0)
-  const countsRef = useRef(EMPTY)
-  const animFrame = useRef<number | undefined>(undefined)
-  const biteTimer = useRef<number | undefined>(undefined)
-
-  useEffect(() => { synthRef.current?.setMuted(muted) }, [muted])
-  useEffect(() => { synthRef.current?.setSound(sound) }, [sound])
-
-  useEffect(() => () => {
-    synthRef.current?.dispose()
-    window.clearTimeout(biteTimer.current)
-  }, [])
-
-  const setMark = useCallback((index: number, result: Judgement) => {
-    setMarks((old) => ({ ...old, [index]: result }))
-  }, [])
-
-  const updateCount = useCallback((result: keyof Counts) => {
-    const next = { ...countsRef.current, [result]: countsRef.current[result] + 1 }
-    if (result === 'perfect' || result === 'good') {
-      streakRef.current += 1
-      next.longest = Math.max(next.longest, streakRef.current)
-    } else {
-      streakRef.current = 0
-    }
-    countsRef.current = next
-  }, [])
-
-  const showFeedback = useCallback((label: string, style: Judgement | 'early', seconds?: number) => {
-    const position = seconds ?? Tone.getContext().rawContext.currentTime - gameStart.current
-    setFeedback((old) => [...old.slice(-7), { id: ++feedbackId.current, seconds: position, label, tone: style }])
-  }, [])
-
-  const prepare = useCallback((next: { levelIndex: number; attempt: number }, message = '') => {
-    setScenerySeed(Math.floor(Math.random() * 0xffffffff))
-    completedBars.current = 0; setBarStreak(0)
-    runGeneration.current++
-    synthRef.current?.dispose(); synthRef.current = null
-    if (animFrame.current) cancelAnimationFrame(animFrame.current)
-    window.clearTimeout(biteTimer.current)
-    activeHold.current = null; setHoldingIndex(null)
-    clearedRun.current = false; setAllNotesCleared(false)
-    judged.current = new Set(); streakRef.current = 0; countsRef.current = { ...EMPTY }
-    setChallenge(next); setPhase('ready')
-    const nextLevel = LEVELS[next.levelIndex]
-    setElapsed(-nextLevel.beatsPerBar * 60 / nextLevel.bpm)
-    setCountdown(4); setMarks({}); setFeedback([])
-    setEating(false); setStumble(false); setNotice(message)
-  }, [])
-
-  useEffect(() => {
-    if (lab.loading) return
-    if (!lab.user) {
-      if (recommendedAccount.current) {
-        lab.abandon(); prepare({ levelIndex: challenge.levelIndex, attempt: 1 })
-      }
-      recommendedAccount.current = null
-      return
-    }
-    if (!lab.ready || recommendedAccount.current === lab.user.id) return
-    recommendedAccount.current = lab.user.id
-    prepare({ levelIndex: lab.recommend(undefined, eligibleLevels), attempt: 1 })
-  }, [prepare, lab.recommend, lab.abandon, eligibleLevels, lab.loading, lab.user, lab.ready, challenge.levelIndex])
-
-  const finish = useCallback(() => {
-    const result = countsRef.current
-    const complete = hasCompletedAllNotes(result, onsets.length, activeHold.current !== null)
-    if (rated) lab.finish(complete, { ...result })
-    if (!complete) {
-      const poolIndex = Math.max(0, eligibleLevels.findIndex((candidate) => candidate.id === level.id))
-      const next = nextChallenge({ levelIndex: poolIndex, attempt: challenge.attempt }, false, eligibleLevels.length)
-      if (rated && next.attempt === 1) next.levelIndex = lab.recommend(level, eligibleLevels)
-      else next.levelIndex = LEVELS.indexOf(eligibleLevels[next.levelIndex] ?? eligibleLevels[0])
-      prepare(next, next.attempt > 1 ? 'Second bite' : '')
-      if (next.attempt === 1) setPhase('lost')
-      return
-    }
-    synthRef.current?.continueMusic()
-    setPhase('finished'); setElapsed(totalSeconds)
-    activeHold.current = null; setHoldingIndex(null); setEating(false)
-    window.clearTimeout(biteTimer.current)
-    if (animFrame.current) cancelAnimationFrame(animFrame.current)
-  }, [challenge, onsets.length, prepare, totalSeconds, rated, lab.finish, lab.recommend, level, eligibleLevels])
-
-  const secureCompletedRun = useCallback(() => {
-    if (clearedRun.current || !hasCompletedAllNotes(countsRef.current, onsets.length, activeHold.current !== null)) return
-    // The player has done every required gesture. Secure the win now so an eager
-    // tap (or a refresh before the rat reaches the hole) cannot turn it into a loss.
-    // Keep the clock running to preserve the last bar's music and disco arrival.
-    clearedRun.current = true; setAllNotesCleared(true)
-    if (rated) lab.finish(true, { ...countsRef.current })
-  }, [onsets.length, rated, lab.finish])
-
-  const beginPending = useRef(false)
-  const begin = useCallback(async () => {
-    if (beginPending.current) return
-    if (loginOpen || lab.loading) return
-    if (rated && !lab.user) { setLoginOpen(true); return }
-    if (rated && !lab.ready) { void lab.retry(); return }
-    beginPending.current = true
-    try {
-    const generation = ++runGeneration.current
-    await Tone.start()
-    if (generation !== runGeneration.current) return
-    if (rated && !await lab.start(level, challenge.attempt, (countInSeconds + .12) * 1000)) return
-    if (generation !== runGeneration.current) { lab.abandon(); return }
-    Tone.Transport.stop()
-    Tone.Transport.cancel()
-    Tone.Transport.position = 0
-    setScenerySeed(Math.floor(Math.random() * 0xffffffff))
-    completedBars.current = 0; setBarStreak(0)
-    judged.current = new Set()
-    clearedRun.current = false; setAllNotesCleared(false)
-    activeHold.current = null; setHoldingIndex(null)
-    streakRef.current = 0
-    countsRef.current = { ...EMPTY }
-    setMarks({}); setElapsed(-countInSeconds)
-    setEating(false); setStumble(false)
-    window.clearTimeout(biteTimer.current)
-    setPhase('countin'); setCountdown(level.beatsPerBar); setFeedback([])
-    const ctx = Tone.getContext().rawContext
-    synthRef.current?.dispose()
-    const audio = createRunAudio(muted, sound)
-    synthRef.current = audio
-    setMusicInstruments(audio.musicInstruments)
-    setMusicStyle(audio.styleName)
-    const synth = audio.metronome
-    const now = ctx.currentTime + 0.12
-    const beat = beatSeconds
-    gameStart.current = now + countInSeconds
-    // Keep the count-in clear, then tuck the click underneath the groove.
-    synth.volume.setValueAtTime(-7, gameStart.current)
-    for (let i = 0; i < level.beatsPerBar; i++) synth.triggerAttackRelease(i === 0 ? 'C6' : 'G5', '32n', now + i * beat, 0.34)
-    for (let i = 0; i < level.bars.length * level.beatsPerBar; i++) {
-      synth.triggerAttackRelease(i % level.beatsPerBar === 0 ? 'C6' : 'G5', '32n', gameStart.current + i * beat, 0.2)
-    }
-    } finally { beginPending.current = false }
-  }, [muted, sound, level, countInSeconds, beatSeconds, rated, challenge.attempt, lab.start, lab.abandon, lab.ready, lab.user, lab.loading, lab.retry, loginOpen])
-
-  useEffect(() => {
-    if (phase !== 'countin' && phase !== 'playing') return
-    const tick = () => {
-      const now = Tone.getContext().rawContext.currentTime
-      if (phase === 'countin') {
-        const remaining = Math.min(level.beatsPerBar, Math.max(0, Math.ceil((gameStart.current - now) / beatSeconds)))
-        setCountdown(remaining)
-        if (now >= gameStart.current) setPhase('playing')
-      }
-      const current = now - gameStart.current
-      setElapsed(Math.max(-countInSeconds, Math.min(current, totalSeconds)))
-      if (now >= gameStart.current) {
-        const hold = activeHold.current
-        if (hold && judgeRelease(current, hold.onset.endSeconds) === 'late') {
-          setMark(hold.onset.index, 'miss'); updateCount('miss'); showFeedback('RELEASE', 'miss'); setStumble(true); finish(); return
-        }
-        if (hold && current - lastMunch.current >= 0.16) {
-          synthRef.current?.munch(); lastMunch.current = current
-        }
-        for (const onset of onsets) {
-          if (activeHold.current?.onset.index !== onset.index && !judged.current.has(onset.index) && current > onset.seconds + HIT_WINDOW_SECONDS) {
-            judged.current.add(onset.index); setMark(onset.index, 'miss'); updateCount('miss'); showFeedback('MISS', 'miss'); setStumble(true)
-            finish()
-            return
-          }
-        }
-        // A bar counts only after its notes (including tied holds) succeed.
-        // The short lookahead lets the new layer enter on the next downbeat.
-        while (completedBars.current < level.bars.length &&
-          current + 0.08 >= (completedBars.current + 1) * level.beatsPerBar * beatSeconds &&
-          onsets.filter((note) => note.bar <= completedBars.current).every((note) => judged.current.has(note.index))) {
-          completedBars.current++
-          setBarStreak(completedBars.current)
-        }
-        synthRef.current?.groove(gameStart.current, beatSeconds, unlockedLayerCount(completedBars.current))
-        if (current > totalSeconds + 0.4) { finish(); return }
-      }
-      animFrame.current = requestAnimationFrame(tick)
-    }
-    animFrame.current = requestAnimationFrame(tick)
-    return () => { if (animFrame.current) cancelAnimationFrame(animFrame.current) }
-  }, [phase, finish, setMark, showFeedback, updateCount, level, onsets, countInSeconds, beatSeconds, totalSeconds])
-
-  const advance = useCallback(() => {
-    const next = rated
-      ? { levelIndex: lab.recommend(undefined, eligibleLevels), attempt: 1 }
-      : (() => {
-        const poolIndex = eligibleLevels.findIndex((candidate) => candidate.id === level.id)
-        return { levelIndex: LEVELS.indexOf(eligibleLevels[(poolIndex + 1) % eligibleLevels.length]), attempt: 1 }
-      })()
-    prepare(next)
-  }, [prepare, rated, lab.recommend, eligibleLevels, level])
-
-  const selectLevel = useCallback((levelIndex: number) => {
-    if (LEVELS[levelIndex]) { lab.abandon(); prepare({ levelIndex, attempt: 1 }) }
-  }, [prepare, lab.abandon])
-
-  const press = useCallback(() => {
-    if (phase === 'lost') return
-    if (phase === 'finished') { advance(); return }
-    if (phase === 'ready') { void begin(); return }
-    if (clearedRun.current) return
-    const now = Tone.getContext().rawContext.currentTime - gameStart.current
-    if (activeHold.current) { updateCount('extra'); setStumble(true); finish(); return }
-    const candidate = onsets.find((item) => !judged.current.has(item.index))
-    const result = judgeTap(now, candidate?.seconds, phase === 'countin')
-    if (result === 'ignore') return
-    if (result === 'extra' || !candidate) {
-      updateCount('extra')
-      showFeedback(candidate && now < candidate.seconds ? 'EARLY' : 'EXTRA', 'early')
-      setStumble(true)
-      finish()
-      return
-    }
-    if (candidate.holdSeconds > 0) {
-      activeHold.current = { onset: candidate, result }
-      setHoldingIndex(candidate.index); lastMunch.current = now
-      showFeedback(result === 'perfect' ? 'Perfect' : result === 'good' ? 'Good' : result === 'early' ? 'Early' : 'Late', result, candidate.seconds)
-    } else {
-      judged.current.add(candidate.index)
-      setMark(candidate.index, result); updateCount(result === 'perfect' ? 'perfect' : 'good'); showFeedback(result === 'perfect' ? 'Perfect' : result === 'good' ? 'Good' : result === 'early' ? 'Early' : 'Late', result, candidate.seconds)
-    }
-    secureCompletedRun()
-    const variant = (bite.variant + 1 + Math.floor(Math.random() * 2)) % 3
-    setBite({ duration: candidate.duration, variant })
-    synthRef.current?.munch(variant)
-    setBitePulse((p) => p + 1); setEating(true)
-    window.clearTimeout(biteTimer.current)
-    if (!candidate.holdSeconds) biteTimer.current = window.setTimeout(() => setEating(false), 260)
-  }, [phase, begin, advance, onsets, setMark, updateCount, showFeedback, finish, bite.variant, secureCompletedRun])
-
-  const release = useCallback(() => {
-    const hold = activeHold.current
-    if (!hold) return
-    const now = Tone.getContext().rawContext.currentTime - gameStart.current
-    activeHold.current = null; setHoldingIndex(null); setEating(false)
-    if (judgeRelease(now, hold.onset.endSeconds) !== 'complete') {
-      setMark(hold.onset.index, 'miss'); updateCount('miss'); showFeedback('HOLD MISSED', 'miss'); setStumble(true); finish(); return
-    }
-    judged.current.add(hold.onset.index)
-    setMark(hold.onset.index, hold.result); updateCount(hold.result === 'perfect' ? 'perfect' : 'good')
-    secureCompletedRun()
-  }, [setMark, updateCount, showFeedback, finish, secureCompletedRun])
-
-  const cancelActiveHold = useCallback(() => {
-    if (!activeHold.current) return
-    updateCount('miss'); setStumble(true); finish()
-  }, [updateCount, finish])
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.code !== 'Space' || event.repeat) return
-      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button, summary, a')) return
-      event.preventDefault(); press()
-    }
-    const onRelease = (event: KeyboardEvent) => {
-      if (event.code !== 'Space') return
-      if (event.target instanceof HTMLElement && event.target.closest('select, input, textarea, button, summary, a')) return
-      event.preventDefault(); release()
-    }
-    const onBlur = () => {
-      if (phase === 'countin' || phase === 'playing') { lab.abandon(); prepare({ levelIndex: challenge.levelIndex, attempt: rated ? 1 : challenge.attempt }) }
-    }
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('keyup', onRelease)
-    const onVisibility = () => { if (document.hidden) onBlur() }
-    window.addEventListener('blur', onBlur)
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('keyup', onRelease)
-      window.removeEventListener('blur', onBlur)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [press, release, phase, rated, lab.abandon, prepare, challenge.levelIndex, challenge.attempt])
 
   const levelProgress = Math.max(0, Math.min(1, elapsed / totalSeconds))
 
@@ -450,6 +140,125 @@ export default function App() {
     </div>}
     {lab.loading && <p className="account-note" role="status">Checking account…</p>}
 
+    {loginOpen && <LoginDialog onCancel={() => setLoginOpen(false)} onLogin={async user => {
+      await lab.acceptUser(user)
+      setLoginOpen(false)
+    }} />}
+    {!lab.user && lab.error && <p role="alert">{lab.error} Unrated play is still available.</p>}
+
+    <section className="game-card">
+      <div className="game-heading"><div className="game-heading-info"><div className="game-status"><span className="live-dot" /> {phase === 'lost' ? 'Caught!' : phase === 'finished' ? 'Complete' : phase === 'countin' ? 'Count in' : level.title}</div>
+        <span className="attempt-indicator">{rated ? challenge.attempt === 1 ? 'RATED' : 'RATED · DRAW CHANCE' : 'UNRATED'} · BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
+        {lab.user && phase !== 'lost' && <OnlineRatings snapshot={lab.snapshot} error={lab.error} saveStatus={lab.saveStatus} delta={lab.delta} onRetry={() => void lab.retry()} />}
+      </div><div className="bpm"><strong className="time-signature" aria-label="4/4 time">4/4</strong><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
+
+      <div className={`runner-lane ${stumble ? 'lane-stumble' : ''} ${phase === 'finished' ? 'level-won' : ''}`}>
+        <div className="instrument-hud" role="status" aria-live="polite" aria-label={musicStyle ? `${musicStyle} · active music layers` : 'Active music layers'} title={musicStyle}>
+          {GROOVE_LAYERS.filter(({ entryBar }) => barStreak >= entryBar - 1).map(({ id, name }) => {
+            const chosen = id === 'synth' ? musicInstruments?.lead : id === 'pad' ? musicInstruments?.chords : id === 'bass' ? musicInstruments?.bass : id === 'hats' ? musicInstruments?.timekeeper : null
+            const icon = chosen?.icon ?? id
+            const label = chosen?.name ?? name
+            return <span className="instrument-life" key={id} title={label}>
+              <InstrumentIcon id={icon} /><span className="sr-only">{label} added. </span>
+            </span>
+          })}
+        </div>
+        <WorldScenery levelIndex={challenge.levelIndex} levelCount={LEVELS.length} seed={scenerySeed} elapsed={elapsed} running={phase === 'playing' || phase === 'countin'} />
+        {notice && <div key={notice + challenge.attempt + challenge.levelIndex} className="run-notice" onAnimationEnd={() => setNotice('')}>{notice}</div>}
+        {phase === 'ready' && <button type="button" className="ready-cue" aria-label="Start level" onClick={() => void begin()}><kbd className="keycap"><span className="desktop-hint">SPACE</span><span className="touch-hint">TAP</span></kbd><span>to start</span></button>}
+        {phase === 'ready' || phase === 'countin' ? (
+          <CountInPreview level={level} countdown={phase === 'countin' ? countdown : undefined} />
+        ) : (
+          <div className="level-progress-row">
+            <div className="level-progress-track" role="progressbar" aria-label="Level progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(levelProgress * 100)}>
+              <div className="progress-journey" aria-hidden="true">
+                <div className="progress-path" />
+                <div className="level-progress-fill" style={{ transform: `scaleX(${levelProgress})` }} />
+                <svg className="progress-rat" viewBox="0 0 28 16" style={{ left: `${levelProgress * 100}%` }}>
+                  <path d="M10 11C3 14 0 10 3 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  <path d="M8 10c0-4 3-6 7-6 3 0 5 2 6 3l5 3-4 2H11z" fill="currentColor" />
+                  <circle cx="19" cy="5" r="3" fill="currentColor" />
+                  <circle cx="22" cy="9" r=".8" fill="#f3f6ef" />
+                </svg>
+                <svg className="progress-home" viewBox="0 0 22 24">
+                  <path d="M2 23V12a9 9 0 0 1 18 0v11" fill="#dce4d6" />
+                  <path d="M5 23V12a6 6 0 0 1 12 0v11" fill="#465a49" />
+                  <path d="M1 23h20" stroke="#b8c7b0" strokeWidth="2" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="lane-topline" />
+        <div className="ground-line" />
+        <div className="cheese-track" aria-hidden="true" style={{ transform: `translateX(${-elapsed * SCROLL_PIXELS_PER_SECOND}px)` }}>
+          <RhythmNotation marks={marks} level={level} />
+          {Array.from({ length: level.bars.length * level.beatsPerBar * 4 }, (_, step) => {
+            const subdivision = step % 4
+            const label = subdivision === 0 ? String(Math.floor(step / 4) % level.beatsPerBar + 1) : ['e', '+', 'a'][subdivision - 1]
+            return <span key={`count-${step}`} className={`rhythm-count ${subdivision === 0 ? 'rhythm-count-beat' : ''}`}
+              style={{ left: step * beatSeconds / 4 * SCROLL_PIXELS_PER_SECOND }}>{label}</span>
+          })}
+          {Array.from({ length: level.bars.length + 1 }, (_, index) => <span
+            key={`bar-${index}`} className={`cheese-barline ${phase !== 'ready' && elapsed * SCROLL_PIXELS_PER_SECOND >= index * level.beatsPerBar * beatSeconds * SCROLL_PIXELS_PER_SECOND - barlineInsetPixels ? 'passed' : 'upcoming'} ${phase !== 'ready' && elapsed >= index * level.beatsPerBar * beatSeconds ? 'is-lit' : ''}`}
+            style={{ left: index * level.beatsPerBar * 60 / level.bpm * SCROLL_PIXELS_PER_SECOND - barlineInsetPixels }}
+          >
+            <svg className="bar-streetlamp" viewBox="0 0 56 150" shapeRendering="crispEdges">
+              <path fill="currentColor" d="M27 150V42H17v-3h22v3H29v108zM18 36v-3h20v3zM23 30v-5h10v5zM20 44h16l-3 13H23z" />
+              <g className="streetlamp-light">
+                <ellipse className="streetlamp-halo" cx="28" cy="49" rx="23" ry="22" />
+                <path d="M23 45h10l-2 9h-6z" />
+              </g>
+              {index < level.bars.length && <>
+                <path fill="#f0dfaa" d="M21 44h14v12H21z" />
+                <text className="lamp-bar-number" x="28" y="50" textAnchor="middle" dominantBaseline="central">{level.bars.length - index}</text>
+              </>}
+            </svg>
+          </span>)}
+          {onsets.map((onset) => <div key={onset.index} className={`rhythm-cheese ${marks[onset.index] ?? ''} ${holdingIndex === onset.index ? 'being-eaten' : ''}`} style={{ left: onset.seconds * SCROLL_PIXELS_PER_SECOND }}>
+            {onset.holdSeconds > 0 && <span className="cheese-strip" style={{ width: onset.holdSeconds * SCROLL_PIXELS_PER_SECOND, clipPath: `inset(0 0 0 ${holdingIndex === onset.index ? Math.max(0, Math.min(100, (elapsed - onset.seconds) / onset.holdSeconds * 100)) : 0}%)` }} />}
+
+          </div>)}
+          <FinishHole tier={challenge.levelIndex} celebrating={phase === 'finished'} perfect={phase === 'finished' && perfect} seed={scenerySeed} left={totalSeconds * SCROLL_PIXELS_PER_SECOND} />
+          {feedback.map((item) => <span key={item.id} className={`note-feedback ${item.tone}`}
+            style={{ left: item.seconds * SCROLL_PIXELS_PER_SECOND }}
+            onAnimationEnd={() => dismissFeedback(item.id)}>{item.label}</span>)}
+          {events.filter((event) => !event.rest).map((event) => <div key={`head-${event.index}`}
+            className={`cheese-head ${marks[event.attackIndex!] ?? ''} ${holdingIndex === event.attackIndex && elapsed >= event.seconds - HIT_WINDOW_SECONDS ? 'being-eaten' : ''}`}
+            style={{ left: event.seconds * SCROLL_PIXELS_PER_SECOND }}>
+            <Cheese duration={event.duration} className="cheese-piece" />
+          </div>)}
+        </div>
+        <RatEntrance entering={phase === 'countin'} progress={(elapsed + countInSeconds) / countInSeconds}>
+          <Rat holding={holdingIndex !== null} eating={eating} stumble={stumble} pulse={bitePulse} bite={bite} />
+        </RatEntrance>
+        
+
+      </div>
+
+      <div className="play-footer">
+        <TapZone phase={phase} cleared={allNotesCleared} hasHolds={hasHolds} resetKey={`${challenge.levelIndex}:${challenge.attempt}`}
+          onPress={press} onRelease={release} onCancel={cancelActiveHold} />
+      </div>
+
+
+      {phase === 'lost' && <section className="loss-overlay" aria-labelledby="loss-title">
+        <div className="loss-card">
+          <span className="loss-eyebrow">END OF THE RAT RUN</span>
+          <Mousetrap />
+          <h2 id="loss-title">Oh, snap.</h2>
+          <p>The trap got you. There’s more cheese out there.</p>
+          {lab.user && <OnlineRatings snapshot={lab.snapshot} error={lab.error} saveStatus={lab.saveStatus} delta={lab.delta} onRetry={() => void lab.retry()} />}
+          <div className="loss-next"><span>NEXT NIBBLE</span><strong>{level.title}</strong></div>
+          <button ref={anotherLevelButton} className="loss-button" onClick={(event) => {
+            event.currentTarget.blur()
+            void begin()
+          }}>ANOTHER LEVEL <span aria-hidden="true">→</span></button>
+        </div>
+      </section>}
+
+
+    </section>
     <div className="admin-toolbar">
       <div className="note-type-filters" role="group" aria-label="Filter levels by note types">
         <span>INCLUDE NOTE TYPES</span>
@@ -489,124 +298,6 @@ export default function App() {
         </select>
       </>}
     </div>
-
-    {loginOpen && <LoginDialog onCancel={() => setLoginOpen(false)} onLogin={async user => {
-      await lab.acceptUser(user)
-      setLoginOpen(false)
-    }} />}
-    {!lab.user && lab.error && <p role="alert">{lab.error} Unrated play is still available.</p>}
-
-    <section className="game-card">
-      <div className="game-heading"><div className="game-heading-info"><div className="game-status"><span className="live-dot" /> {phase === 'lost' ? 'Caught!' : phase === 'finished' ? 'Complete' : phase === 'countin' ? 'Count in' : level.title}</div>
-        <span className="attempt-indicator">{rated ? challenge.attempt === 1 ? 'RATED' : 'RATED · DRAW CHANCE' : 'UNRATED'} · BITE {challenge.attempt} / {ATTEMPTS_PER_LEVEL}</span>
-        {lab.user && phase !== 'lost' && <OnlineRatings snapshot={lab.snapshot} error={lab.error} saveStatus={lab.saveStatus} delta={lab.delta} onRetry={() => void lab.retry()} />}
-      </div><div className="bpm"><strong className="time-signature" aria-label="4/4 time">4/4</strong><strong>{level.bpm}</strong><small>BPM</small><span className="divider" /><small>BAR {Math.min(level.bars.length, Math.max(1, Math.floor(elapsed / (level.beatsPerBar * beatSeconds)) + 1))} / {level.bars.length}</small></div></div>
-
-      <div className={`runner-lane ${stumble ? 'lane-stumble' : ''} ${phase === 'finished' ? 'level-won' : ''}`}>
-        {(phase === 'ready' || phase === 'countin') && <CountInPreview level={level} countdown={phase === 'countin' ? countdown : undefined} />}
-        <div className="instrument-hud" role="status" aria-live="polite" aria-label={musicStyle ? `${musicStyle} · active music layers` : 'Active music layers'} title={musicStyle}>
-          {GROOVE_LAYERS.filter(({ entryBar }) => barStreak >= entryBar - 1).map(({ id, name }) => {
-            const chosen = id === 'synth' ? musicInstruments?.lead : id === 'pad' ? musicInstruments?.chords : id === 'bass' ? musicInstruments?.bass : id === 'hats' ? musicInstruments?.timekeeper : null
-            const icon = chosen?.icon ?? id
-            const label = chosen?.name ?? name
-            return <span className="instrument-life" key={id} title={label}>
-              <InstrumentIcon id={icon} /><span className="sr-only">{label} added. </span>
-            </span>
-          })}
-        </div>
-        <WorldScenery levelIndex={challenge.levelIndex} levelCount={LEVELS.length} seed={scenerySeed} elapsed={elapsed} running={phase === 'playing' || phase === 'countin'} />
-        {notice && <div key={notice + challenge.attempt + challenge.levelIndex} className="run-notice" onAnimationEnd={() => setNotice('')}>{notice}</div>}
-        {phase === 'ready' && <div className="ready-cue"><kbd className="keycap"><span className="desktop-hint">SPACE</span><span className="touch-hint">TAP</span></kbd><span>to start</span></div>}
-      <div className="level-progress-row">
-
-        <div className="level-progress-track" role="progressbar" aria-label="Level progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(levelProgress * 100)}>
-          <div className="progress-journey" aria-hidden="true">
-            <div className="progress-path" />
-            <div className="level-progress-fill" style={{ transform: `scaleX(${levelProgress})` }} />
-            <svg className="progress-rat" viewBox="0 0 28 16" style={{ left: `${levelProgress * 100}%` }}>
-              <path d="M10 11C3 14 0 10 3 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              <path d="M8 10c0-4 3-6 7-6 3 0 5 2 6 3l5 3-4 2H11z" fill="currentColor" />
-              <circle cx="19" cy="5" r="3" fill="currentColor" />
-              <circle cx="22" cy="9" r=".8" fill="#f3f6ef" />
-            </svg>
-            <svg className="progress-home" viewBox="0 0 22 24">
-              <path d="M2 23V12a9 9 0 0 1 18 0v11" fill="#dce4d6" />
-              <path d="M5 23V12a6 6 0 0 1 12 0v11" fill="#465a49" />
-              <path d="M1 23h20" stroke="#b8c7b0" strokeWidth="2" />
-            </svg>
-          </div>
-        </div>
-      </div>
-        <div className="lane-topline" />
-        <div className="ground-line" />
-        <div className="cheese-track" aria-hidden="true" style={{ transform: `translateX(${-elapsed * SCROLL_PIXELS_PER_SECOND}px)` }}>
-          <RhythmNotation marks={marks} level={level} />
-          {Array.from({ length: level.bars.length * level.beatsPerBar * 4 }, (_, step) => {
-            const subdivision = step % 4
-            const label = subdivision === 0 ? String(Math.floor(step / 4) % level.beatsPerBar + 1) : ['e', '+', 'a'][subdivision - 1]
-            return <span key={`count-${step}`} className={`rhythm-count ${subdivision === 0 ? 'rhythm-count-beat' : ''}`}
-              style={{ left: step * beatSeconds / 4 * SCROLL_PIXELS_PER_SECOND }}>{label}</span>
-          })}
-          {Array.from({ length: level.bars.length + 1 }, (_, index) => <span
-            key={`bar-${index}`} className={`cheese-barline ${phase !== 'ready' && elapsed * SCROLL_PIXELS_PER_SECOND >= index * level.beatsPerBar * beatSeconds * SCROLL_PIXELS_PER_SECOND - barlineInsetPixels ? 'passed' : 'upcoming'} ${phase !== 'ready' && elapsed >= index * level.beatsPerBar * beatSeconds ? 'is-lit' : ''}`}
-            style={{ left: index * level.beatsPerBar * 60 / level.bpm * SCROLL_PIXELS_PER_SECOND - barlineInsetPixels }}
-          >
-            <svg className="bar-streetlamp" viewBox="0 0 56 150" shapeRendering="crispEdges">
-              <path fill="currentColor" d="M27 150V42H17v-3h22v3H29v108zM18 36v-3h20v3zM23 30v-5h10v5zM20 44h16l-3 13H23z" />
-              <g className="streetlamp-light">
-                <ellipse className="streetlamp-halo" cx="28" cy="49" rx="23" ry="22" />
-                <path d="M23 45h10l-2 9h-6z" />
-              </g>
-              {index < level.bars.length && <>
-                <path fill="#f0dfaa" d="M21 44h14v12H21z" />
-                <text className="lamp-bar-number" x="28" y="50" textAnchor="middle" dominantBaseline="central">{level.bars.length - index}</text>
-              </>}
-            </svg>
-          </span>)}
-          {onsets.map((onset) => <div key={onset.index} className={`rhythm-cheese ${marks[onset.index] ?? ''} ${holdingIndex === onset.index ? 'being-eaten' : ''}`} style={{ left: onset.seconds * SCROLL_PIXELS_PER_SECOND }}>
-            {onset.holdSeconds > 0 && <span className="cheese-strip" style={{ width: onset.holdSeconds * SCROLL_PIXELS_PER_SECOND, clipPath: `inset(0 0 0 ${holdingIndex === onset.index ? Math.max(0, Math.min(100, (elapsed - onset.seconds) / onset.holdSeconds * 100)) : 0}%)` }} />}
-
-          </div>)}
-          <FinishHole tier={challenge.levelIndex} celebrating={phase === 'finished'} perfect={phase === 'finished' && countsRef.current.perfect === onsets.length} seed={scenerySeed} left={totalSeconds * SCROLL_PIXELS_PER_SECOND} />
-          {feedback.map((item) => <span key={item.id} className={`note-feedback ${item.tone}`}
-            style={{ left: item.seconds * SCROLL_PIXELS_PER_SECOND }}
-            onAnimationEnd={() => setFeedback((old) => old.filter((entry) => entry.id !== item.id))}>{item.label}</span>)}
-          {events.filter((event) => !event.rest).map((event) => <div key={`head-${event.index}`}
-            className={`cheese-head ${marks[event.attackIndex!] ?? ''} ${holdingIndex === event.attackIndex && elapsed >= event.seconds - HIT_WINDOW_SECONDS ? 'being-eaten' : ''}`}
-            style={{ left: event.seconds * SCROLL_PIXELS_PER_SECOND }}>
-            <Cheese duration={event.duration} className="cheese-piece" />
-          </div>)}
-        </div>
-        <RatEntrance entering={phase === 'countin'} progress={(elapsed + countInSeconds) / countInSeconds}>
-          <Rat holding={holdingIndex !== null} eating={eating} stumble={stumble} pulse={bitePulse} bite={bite} />
-        </RatEntrance>
-        
-
-      </div>
-
-      <div className="play-footer">
-        <TapZone phase={phase} cleared={allNotesCleared} hasHolds={hasHolds} resetKey={`${challenge.levelIndex}:${challenge.attempt}`}
-          onPress={press} onRelease={release} onCancel={cancelActiveHold} />
-      </div>
-
-
-      {phase === 'lost' && <section className="loss-overlay" aria-labelledby="loss-title">
-        <div className="loss-card">
-          <span className="loss-eyebrow">END OF THE RAT RUN</span>
-          <Mousetrap />
-          <h2 id="loss-title">Oh, snap.</h2>
-          <p>The trap got you. There’s more cheese out there.</p>
-          {lab.user && <OnlineRatings snapshot={lab.snapshot} error={lab.error} saveStatus={lab.saveStatus} delta={lab.delta} onRetry={() => void lab.retry()} />}
-          <div className="loss-next"><span>NEXT NIBBLE</span><strong>{level.title}</strong></div>
-          <button ref={anotherLevelButton} className="loss-button" onClick={(event) => {
-            event.currentTarget.blur()
-            void begin()
-          }}>ANOTHER LEVEL <span aria-hidden="true">→</span></button>
-        </div>
-      </section>}
-
-
-    </section>
     <CheeseBoard />
 
   </>

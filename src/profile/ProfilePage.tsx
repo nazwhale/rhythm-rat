@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../ratings/api'
-import type { Profile } from '../ratings/onlineTypes'
+import type { Profile } from '../shared/apiContract'
 import LoginDialog from '../ratings/LoginDialog'
 import RatingGraph from './RatingGraph'
 import PuzzlePreview from './PuzzlePreview'
@@ -22,7 +22,7 @@ export default function ProfilePage() {
     const current = ++generation.current
     setLoading(true); setError('')
     try {
-      const value = await api<Profile>('profile')
+      const value = await api.get('profile')
       if (current !== generation.current) return
       setProfile(value); setUsername(value.username); setSignedOut(false)
     } catch (err) {
@@ -46,7 +46,7 @@ export default function ProfilePage() {
       <section className="profile-card profile-identity"><div><p className="account-eyebrow">SQUEAK, IT’S YOU</p><h2>{profile.username}</h2><p>Joined {new Date(profile.createdAt).toLocaleDateString()}</p></div>
         <form onSubmit={async event => {
           event.preventDefault(); setSaving(true); setError(''); setMessage('')
-          try { const result = await api<{ username: string }>('profile', { username }); setProfile(p => p ? { ...p, username: result.username } : p); setUsername(result.username); setMessage('Username saved.') }
+          try { const result = await api.post('profile', { username }); setProfile(p => p ? { ...p, username: result.username } : p); setUsername(result.username); setMessage('Username saved.') }
           catch (err) { setError(err instanceof Error ? err.message : 'Could not save your username.') }
           finally { setSaving(false) }
         }}><label htmlFor="profile-username">Username</label><div className="username-controls"><input id="profile-username" name="username" autoComplete="nickname" required minLength={3} maxLength={32} pattern="[A-Za-z0-9_\-]{3,32}" value={username} disabled={saving} onChange={event => { setUsername(event.target.value); setMessage('') }} /><button className="account-button" disabled={saving} type="submit">{saving ? 'Saving…' : 'Save'}</button></div><small>3–32 letters, numbers, hyphens or underscores. Visible on the leaderboard.</small><p role="status">{message}</p></form>
@@ -64,7 +64,7 @@ export default function ProfilePage() {
         })}</tbody></table></div>
         {visibleResults < profile.results.length && <button className="account-button" onClick={() => setVisibleResults(count=>count+20)}>Show more results</button>}</>}
       </section>
-      <p><button className="text-button" onClick={async () => { try { await api('auth/logout', {}); generation.current++; close(); setProfile(null); setSignedOut(true) } catch (err) { setError(err instanceof Error ? err.message : 'Could not sign out.') } }}>Sign out</button></p>
+      <p><button className="text-button" onClick={async () => { try { await api.post('auth/logout', {}); generation.current++; close(); setProfile(null); setSignedOut(true) } catch (err) { setError(err instanceof Error ? err.message : 'Could not sign out.') } }}>Sign out</button></p>
     </>}
     {profile && preview && <PuzzlePreview id={previewId} preview={preview} onClose={close} />}
   </>

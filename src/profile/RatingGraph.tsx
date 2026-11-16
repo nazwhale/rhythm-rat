@@ -1,5 +1,5 @@
 import { useId, useState } from 'react'
-import type { RatingPoint } from '../ratings/onlineTypes'
+import type { RatingPoint } from '../shared/apiContract'
 const date = (at: number) => new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
 export default function RatingGraph({ points }: { points: RatingPoint[] }) {
   const titleId = useId(), descriptionId = useId()

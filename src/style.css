@@ -158,7 +158,7 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
 .play-footer{justify-content:space-between}
 .input-cue{font-size:12px;color:#829078}
 .touch-hint{display:none}
-.ready-cue{position:absolute;left:25%;bottom:112px;transform:translateX(-50%);color:#75856d;font:12px 'DM Sans',sans-serif;pointer-events:none}
+.ready-cue{position:absolute;left:25%;bottom:112px;transform:translateX(-50%);color:#75856d;font:12px 'DM Sans',sans-serif;border:0;background:none;padding:0;min-height:44px;touch-action:manipulation}
 .run-notice{position:absolute;left:25%;bottom:155px;transform:translateX(-50%);font:600 20px 'Space Grotesk',sans-serif;color:#64795b;white-space:nowrap;z-index:4;animation:run-notice 2.2s ease both;pointer-events:none}
 @keyframes run-notice{0%{opacity:0;translate:0 8px}12%,70%{opacity:1;translate:0 0}100%{opacity:0;translate:0 -10px}}
 .note-feedback{position:absolute;bottom:83px;transform:translateX(-50%);font:600 14px 'Space Grotesk',sans-serif;white-space:nowrap;pointer-events:none;z-index:5;animation:note-feedback 1s ease-out both;color:#9c9f95}
@@ -454,9 +454,10 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
 .tap-zone strong { font: 600 18px 'Space Grotesk', sans-serif; }
 .tap-zone span { font: 12px 'DM Sans', sans-serif; }
 .tap-zone:active { background: #deedcf; }
+.tap-zone.is-idle { touch-action: manipulation; }
 .tap-zone.is-cleared { border-color: #d7c78a; background: #fcf7e5; }
 .tap-zone:disabled { opacity: .5; }
-.count-in-preview { position: absolute; z-index: 4; top: 58px; left: 16px; right: 16px; display: flex; gap: 14px; align-items: center; padding: 9px 12px; background: #fafcf8f2; border: 1px solid #e2e9d9; border-radius: 8px; pointer-events: none; }
+.count-in-preview { position: absolute; z-index: 4; top: 16px; left: 24px; right: 24px; display: flex; gap: 14px; align-items: center; padding: 9px 12px; background: #fafcf8f2; border: 1px solid #e2e9d9; border-radius: 8px; pointer-events: none; }
 .count-in-beat { min-width: 50px; display: grid; text-align: center; color: #45683e; }
 .count-in-beat strong { font: 600 40px/1 'Space Grotesk', sans-serif; }
 .count-in-beat span, .count-in-heading { font: 8px 'DM Mono', monospace; letter-spacing: .12em; color: #74846b; }
@@ -486,7 +487,7 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
   .silent-mode-reminder .reminder-mobile { display: block; }
   .silent-mode-reminder .reminder-mobile-icon { display: block; }
   .play-footer { padding: 12px; }
-  .count-in-preview { gap: 8px; left: 10px; right: 10px; padding: 8px; }
+  .count-in-preview { gap: 8px; top: 12px; left: 12px; right: 12px; padding: 8px; }
   .count-in-beat { min-width: 35px; }
   .count-in-beat strong { font-size: 30px; }
   .count-in-guide ul { gap: 4px 8px; }
@@ -624,7 +625,7 @@ svg.board-rest{width:28px;height:42px;left:4px;top:7px}
 .play-mode-switch label:has(input:checked) .mode-badge{background:#dae8c9;color:#385131}
 .page-content>.game-card{margin-top:20px}
 @media(max-width:800px){.brand-and-tagline{gap:12px}.brand-tagline{font-size:12px}}
-@media(max-width:560px){.brand-and-tagline{flex:1 1 100%;justify-content:space-between}.header-controls{margin-left:auto}.count-in-preview.is-waiting{top:45px}}
+@media(max-width:560px){.brand-and-tagline{flex:1 1 100%;justify-content:space-between}.header-controls{margin-left:auto}}
 
 /* Keep progress feedback beside the game; history lives on the profile. */
 .game-heading{height:auto;min-height:76px;padding-top:12px;padding-bottom:12px;gap:12px}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from './api'
-import type { OnlineUser } from './onlineTypes'
+import type { OnlineUser } from '../shared/apiContract'
 
 const CODE_LENGTH = 4
 const emptyCode = () => Array<string>(CODE_LENGTH).fill('')
@@ -50,7 +50,7 @@ export default function LoginDialog({ onLogin, onCancel }: {
     setBusy(true)
     setError('')
     try {
-      await api('auth/code', { email })
+      await api.post('auth/code', { email })
       setSent(true)
       setDigits(emptyCode())
       if (sent) focusDigit(0)
@@ -68,7 +68,7 @@ export default function LoginDialog({ onLogin, onCancel }: {
     setBusy(true)
     setError('')
     try {
-      const response = await api<{ user: OnlineUser }>('auth/verify', { email, code: completeCode })
+      const response = await api.post('auth/verify', { email, code: completeCode })
       await onLogin(response.user)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not sign in.')

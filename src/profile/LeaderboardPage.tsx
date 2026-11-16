@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../ratings/api'
-import type { Leaderboard } from '../ratings/onlineTypes'
+import type { Leaderboard } from '../shared/apiContract'
 import PixelTrophy from './PixelTrophy'
 export default function LeaderboardPage() {
   const [board, setBoard] = useState<Leaderboard | null>(null)
@@ -11,7 +11,7 @@ export default function LeaderboardPage() {
   const load = useCallback(async () => {
     const current = ++generation.current
     setLoading(true); setError('')
-    try { const value = await api<Leaderboard>(`leaderboard?offset=${offset}`); if (current === generation.current) setBoard(value) }
+    try { const value = await api.get('leaderboard', offset); if (current === generation.current) setBoard(value) }
     catch (err) { if (current === generation.current) setError(err instanceof Error ? err.message : 'Could not load the leaderboard.') }
     finally { if (current === generation.current) setLoading(false) }
   }, [offset])
